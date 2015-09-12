@@ -36,19 +36,23 @@ class StoredData(dataFormat):
         dataFormat.__init__(self, order)
         self.path = abspath(join(dirname(__file__), path))
         file = open(self.path,'r')
-        if (file.readline()!= ""):
-            j= json.load(file)
-            print(j)
-        file.close()
-            
+        t = file.readline()
+        j = json.JSONDecoder().decode(t)
+        for item in j:
+            formated = json.JSONDecoder().decode(j[item])
+            formated2 = json.JSONDecoder().decode(item)
+            self.insert(formated2, formated)
+        print self.items()
     '''
     Abrir el archivo y tomar cada elemento del arbol y dumpearlo
     '''
     def dump(self):
         file = open(self.path, 'w+')
-        file.write('{')
+        towrite = {}
         for item in self.items():
-            print(json.JSONEncoder().encode(item))
-        file.write('}')
+            snd = item[1]
+            snd = json.JSONEncoder().encode(snd)
+            towrite[item[0]] = snd
+        file.write(json.JSONEncoder().encode(towrite))
         file.close()
             
