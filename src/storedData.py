@@ -35,7 +35,7 @@ class StoredData(dataFormat):
         '''
         dataFormat.__init__(self, order)
         self.tablename = path
-        self.tablepath = abspath(join(dirname(__file__), path))
+        self.path = abspath(join(dirname(__file__), path))
         try:
             fh = open(self.path,'r')
             t = fh.readline()
@@ -45,10 +45,9 @@ class StoredData(dataFormat):
                 formated2 = json.JSONDecoder().decode(item)
                 self.insert(formated2, formated)
         except IOError:
-            return -1
+            print("Table not found")
         else:
             fh.close()
-            return 0
     '''
     Abrir el archivo y tomar cada elemento del arbol y dumpearlo
     '''
@@ -70,7 +69,6 @@ class StoredData(dataFormat):
     def udpateMultiple(self,key,indexes, values):
         temp = self.get(key)
         if temp != None:
-            self.remove(key)
             i = 0
             for index in indexes:
                 try:
@@ -86,7 +84,6 @@ class StoredData(dataFormat):
     def updateSingle(self,key,index,value):        
         temp = self.get(key)
         if temp != None:
-            self.remove(key)
             try:
                 temp[index] = value
             except IndexError:
@@ -104,5 +101,9 @@ class StoredData(dataFormat):
             return toret
         return -1
     
+    def insert (self,key,data):
+        if self.get(key) == None:
+            dataFormat.insert(self, key, data)
+            
     def getAll(self):
         return self.items()

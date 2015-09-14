@@ -4,7 +4,10 @@ if __name__ == '__main__':
 
 import storedData
 tree = storedData.StoredData(20,'test.json')
-for i in range(20,30):
-    tree.insert(i, ['Luis', 617277997, 'Hacienda Del Rey'])
+for i in range(0,10):
+    tree.insert(i, [10101])
+print tree.getAll()
+tree.updateSingle(0, 0, 0)
+print tree.getAll()
+
 tree.dump()
-print tree.get(20)

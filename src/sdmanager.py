@@ -36,14 +36,30 @@ class StoredDataManager(object):
             return SD.StoredData(20 , table).search(key)
         return -1 
 
-    def update(self, table, key, column, value ):
+    def update(self, table, key, columns, values ):
         if self.exists(table):
-            index = NaN # metodo del system catalog para devolver el indice de una columna
-            return SD.StoredData(20, table).udpate(key, index, value)
+            if (isinstance(columns, list) == False and isinstance (values,list)) or (isinstance(columns, list) and isinstance (values,list) == False):
+                return -1
+            elif isinstance(columns, list) and isinstance (values,list):            
+                indexes = [] # metodo del system catalog para devolver el indice de una columna
+                for column in columns:
+                    indexes.append(NaN) #metodo de indice
+                return SD.StoredData(20, table).udpateMultiple(key, indexes, values)
+            else:
+                index = NaN # metodo del system catalog para devolver el indice de una columna
+                return SD.StoredData(20, table).udpateSingle(key, index, values)
         return -1
     
     def insert(self, table, key, columns, values ):
-        return SD.StoredData(20,table).insert(key, values)
+        if self.exists(table):
+            return SD.StoredData(20,table).insert(key, values)
+        else:
+            return -1
+    
+    def getAll(self,table):
+        if self.exists(table):
+            return SD.StoredData(20, table).getAll()
+        return -1
     
     def exists(self,table):
         for t in self.tableList:
