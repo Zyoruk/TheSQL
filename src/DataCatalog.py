@@ -57,11 +57,12 @@ class DataCatalog(object):
         for jason in onlyfiles:            
             if jason.endswith('.json'):
                 tables.append(jason)
+        
         tabs = []
         for tab in tables:
             tabs.append(tab.split(".",1)[0])
         
-        return tabs
+        return tables
                  
     def getTypes(self, table):
         self.openSysCat(table)

@@ -18,6 +18,8 @@ Created on Sep 12, 2015
 @author: zyoruk
 '''
 import storedData as SD
+from DataCatalog import DataCatalog
+
 class StoredDataManager(object):
     '''
     classdocs
@@ -28,8 +30,8 @@ class StoredDataManager(object):
         '''
         Constructor
         '''
-        self.sysCat = None #hay que cambiarlo
-        self.tableList = [] #hay que rellenarlo de alguna manera conjunto al SysCat
+        self.sysCat = DataCatalog() 
+        self.tableList = self.sysCat.getTabNames()
         
     def search(self, table, key):
         if (self.exists(table)):
@@ -41,18 +43,26 @@ class StoredDataManager(object):
             if (isinstance(columns, list) == False and isinstance (values,list)) or (isinstance(columns, list) and isinstance (values,list) == False):
                 return -1
             elif isinstance(columns, list) and isinstance (values,list):            
-                indexes = [] # metodo del system catalog para devolver el indice de una columna
+                indexes = [] 
                 for column in columns:
-                    indexes.append(NaN) #metodo de indice
-                return SD.StoredData(20, table).udpateMultiple(key, indexes, values)
+                    indexes.append(self.sysCat.getIndex(table, column))
+                sd = SD.StoredData(20,table)
+                sd.udpateMultiple(key, indexes, values)
+                sd.dump()
+                return 0                
             else:
-                index = NaN # metodo del system catalog para devolver el indice de una columna
-                return SD.StoredData(20, table).udpateSingle(key, index, values)
+                index = self.sysCat.getIndex(table, column)
+                sd = SD.StoredData(20,table)
+                sd.updateSingle(key, index, values)
+                sd.dump()
+                return 0 
         return -1
     
     def insert(self, table, key, columns, values ):
         if self.exists(table):
-            return SD.StoredData(20,table).insert(key, values)
+            sd =SD.StoredData(20,table) 
+            sd.insert(key, values)
+            sd.dump()
         else:
             return -1
     
@@ -71,15 +81,17 @@ class StoredDataManager(object):
     
     def remove(self,table,key):
         if self.exists(table):
-            return SD.StoredData(20, table).remove(key)
+            sd = SD.StoredData(20,table)
+            sd.remove(key)
+            sd.dump()
         return -1
+    
     def erase(self,table):
         if self.exists(table):
             return SD.StoredData(20, table).erase()
         return -1
     
-    def exists(self,table):
-        
+    def exists(self,table):        
         for t in self.tableList:
             if t == table:
                 return True

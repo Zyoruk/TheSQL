@@ -1,0 +1,1 @@
+{"PK": "julia", "enabled": "false", "columns": [{"null": "null", "type": "char", "name": "demonios"}, {"null": "null", "type": "double", "name": "maria"}, {"null": "not null", "type": "int", "name": "julia"}], "index": "false"}
