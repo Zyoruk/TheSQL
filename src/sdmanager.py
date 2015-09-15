@@ -61,7 +61,25 @@ class StoredDataManager(object):
             return SD.StoredData(20, table).getAll()
         return -1
     
+    def getAllKeys(self, table):
+        if self.exists(table):
+            res = []
+            l =  SD.StoredData(20,table).getAll()
+            for item in l:
+                res.append(item[0][0])
+        return -1
+    
+    def remove(self,table,key):
+        if self.exists(table):
+            return SD.StoredData(20, table).remove(key)
+        return -1
+    def erase(self,table):
+        if self.exists(table):
+            return SD.StoredData(20, table).erase()
+        return -1
+    
     def exists(self,table):
+        
         for t in self.tableList:
             if t == table:
                 return True

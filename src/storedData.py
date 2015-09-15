@@ -107,3 +107,14 @@ class StoredData(dataFormat):
             
     def getAll(self):
         return self.items()
+    
+    def erase(self):
+        try:
+            fh = open(self.path, 'w+')
+            towrite = {}
+            fh.write(json.JSONEncoder().encode(towrite))
+        except IOError:
+            return -1
+        else:
+            fh.close()
+            return 0
