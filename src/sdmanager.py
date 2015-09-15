@@ -23,7 +23,7 @@ class StoredDataManager(object):
     classdocs
     '''
 
-
+    
     def __init__(self):
         '''
         Constructor

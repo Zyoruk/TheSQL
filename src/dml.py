@@ -19,13 +19,11 @@ Created on Sep 13, 2015
 @author: zyoruk
 '''
 
-import sdmanager
+import sdmanager, xml.etree
 class DML(object):
     '''
     classdocs
     '''
-
-
     def __init__(self):
         '''
         Constructor
@@ -50,12 +48,12 @@ class DML(object):
                 #index = syscat.getIndex(col)
                 t = self.sdm.getAll(table)
                 for item in t :
-                    #if item[index] <operador> operando:
+                    #if item[1][index] <operador> operando:
                     #    self.smd.remove(table, key)
                     print 'algo'
         return -1
     
-    def evaluate (self, operator, tableVal, compVar):
+    def compare (self, operator, tableVal, compVar):
         #Verificar que los tipos de datos sean iguales 
         if True:
             if operator == '=':
@@ -74,4 +72,25 @@ class DML(object):
                 return tableVal != compVar
         return -1
         
+    def Select(self, table, columns = {}, form = '0'):
+        if columns == {}:
+            if form != '0':
+                return self.FormatXML(self.sdm.getAll(table))
+            return self.sdm.getAll(table)
+        else:
+            #Verificar que existan las columnas en la tabla.
+            indexes =[]
+            for column in columns:
+                #indexes.append(syscat.getindex(column))
+                indexes.append(NaN)
+            ResultSet ={}
+            tempResultSet = self.sdm.getAll(table)
+            for item in tempResultSet:
+                t = []
+                for index in indexes:
+                    ResultSet[item[0]] = (item[0], item[1][index])
+                    t.append            
+            return 1
         
+    def FormatXML(self, resultSet):
+        print 'a'

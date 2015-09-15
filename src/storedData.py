@@ -104,6 +104,8 @@ class StoredData(dataFormat):
     def insert (self,key,data):
         if self.get(key) == None:
             dataFormat.insert(self, key, data)
+            return 0 
+        return -1
             
     def getAll(self):
         return self.items()
@@ -118,3 +120,9 @@ class StoredData(dataFormat):
         else:
             fh.close()
             return 0
+    
+    def remove(self,key):
+        if self.get(key) != None:
+            dataFormat.remove(self, key)
+            return 0
+        return -1
