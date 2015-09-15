@@ -18,9 +18,9 @@ class DataCatalog(object):
             self.db = json.load(self.sysCat)
             
     def hasIndex(self, table):  
-        self.openSysCat()
+        self.openSysCat(table)
         cat = self.db['index']
-        self.db.close()       
+        self.sysCat.close()       
         return cat
             
     def getType(self, table, column):
@@ -109,8 +109,8 @@ class DataCatalog(object):
                                  'null':column_nullability.pop(-1)})
                 
                 table = {'PK': PK,
-                         'index':'false',
-                         'enabled':'true',
+                         'index':False,
+                         'enabled':True,
                          'columns':cols}
                                 
                 if os.path.isfile(tName):
@@ -128,7 +128,7 @@ class DataCatalog(object):
             db = json.load(sysCat)
         sysCat.close()
                 
-        db["enabled"] = "false"
+        db["enabled"] = False
         
         with open(table, 'w') as sysCat:
             json.dump(db,sysCat)
