@@ -15,8 +15,8 @@ class TestClass(object):
         types1 = ['int', 'double', 'char']
         isNull1 = ['not null', 'null', 'null']
         
-        self.data.setNewTable('mugre', names, types, isNull , 'julia')
-        self.data.setNewTable('moo', names1, types1, isNull1 , 'julia')
+        self.data.setNewTable('mugre', names, types, 'None', isNull , 'julia')
+        self.data.setNewTable('moo', names1, types1,'julia', isNull1 , 'julia')
         
     def test2(self):
         self.data.dropTable("mugre")
@@ -35,7 +35,7 @@ class TestClass(object):
 if __name__ == '__main__':
     print("This is 'Bases de Datos'!")
     tests = TestClass()
-    tests.test4()
+    tests.test1()
     
     
     

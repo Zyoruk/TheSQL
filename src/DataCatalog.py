@@ -87,33 +87,37 @@ class DataCatalog(object):
                 
     """WRITE"""
     
-    def setNewDB(self):
-        with open('sysCat.json', 'w') as outfile:
+    def setNewDB(self, directory):        
+        with open(directory + 'sysCat.json', 'w') as outfile:
             json.dump({'Index':'false'}, outfile)
           
                 
-    def setNewTable(self, table_name, columns_names, column_type, column_nullability, PK):
+    def setNewTable(self, table_name, columns_names, column_type, FK, column_nullability, PK):
         
         tName = table_name + '.json'
         
         """Check for PK in columns"""
-        if PK in columns_names:        
+        if PK in columns_names:
+            if not(FK in columns_names):
+                FK = 'None'
+                            
             """Not enough names for types"""
             if len(columns_names) != len(column_type) or len(columns_names) != len(column_nullability):
                 #send error
                 return
-            else:            
-                
+            
+            else:
                 cols = []                           
                 while len(columns_names) != 0:                
                     cols.append({'name':columns_names.pop(-1),'type':column_type.pop(-1),
                                  'null':column_nullability.pop(-1)})
                 
-                table = {'PK': PK,
-                         'index':False,
-                         'enabled':True,
-                         'columns':cols}
-                                
+                table = {'PK':PK,
+                     'FK':FK, 
+                     'index':False,
+                     'enabled':True,
+                     'columns':cols}
+                                    
                 if os.path.isfile(tName):
                     #TO DO: Return error
                     print('error')
@@ -121,7 +125,6 @@ class DataCatalog(object):
                     with open(tName, 'w') as sysCat:
                         json.dump(table,sysCat)
         return
-
             
     def dropTable(self, table_name):
         table = table_name + '.json'
