@@ -1,9 +1,10 @@
 from DataCatalog import DataCatalog
+from CLP import CLP
 
-class TestClass(object):
+class DCTestClass(object):
     
     def __init__(self):
-        self.data = DataCatalog()
+        self.data = DataCatalog('bulma')
     
     def test1(self):
                    
@@ -31,11 +32,21 @@ class TestClass(object):
         print(self.data.getTabNames())
         print(self.data.getIndex("mugre", "julia"))
 
+class CLPTestClass(object):
+    
+    def __init__(self):
+        self.data = CLP()
+        
+    def test1(self):
+        print(self.data.listDatabases())
+        self.data.createDatabase("second")
+
 
 if __name__ == '__main__':
     print("This is 'Bases de Datos'!")
-    tests = TestClass()
-    tests.test1()
+    #test1 = DCTestClass()
+    test2 = CLPTestClass()
+    test2.test1()
     
     
     

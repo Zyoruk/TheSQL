@@ -22,6 +22,12 @@ class DataCatalog(object):
         cat = self.db['index']
         self.sysCat.close()       
         return cat
+    
+    def getFK(self, table):  
+        self.openSysCat(table)
+        cat = self.db['FK']
+        self.sysCat.close()       
+        return cat
             
     def getType(self, table, column):
         self.openSysCat(table)
@@ -113,10 +119,10 @@ class DataCatalog(object):
                                  'null':column_nullability.pop(-1)})
                 
                 table = {'PK':PK,
-                     'FK':FK, 
-                     'index':False,
-                     'enabled':True,
-                     'columns':cols}
+                         'FK':FK, 
+                         'index':False,
+                         'enabled':True,
+                         'columns':cols}
                                     
                 if os.path.isfile(tName):
                     #TO DO: Return error
