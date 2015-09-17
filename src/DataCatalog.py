@@ -4,6 +4,7 @@ import os.path
 from os import listdir
 
 EVM_LIST = abspath(dirname('../evm/'))
+VARFILE = EVM_LIST + '/' + 'VARIABLES.json'
 
 class DataCatalog(object):
     
@@ -16,8 +17,14 @@ class DataCatalog(object):
     """READ"""
     def getEVM(self):
         tmp = self.db
-        with open(EVM_LIST + '/' + 'VARIABLES.json', 'r') as self.sysCat:
-            self.db = json.load(self.sysCat)
+        try:
+            with open(VARFILE, 'r') as self.sysCat:
+                self.db = json.load(self.sysCat)
+        except IOError:
+            self.db = {'db':0}
+            with open(VARFILE , 'w') as vars:
+                json.dump(self.db,vars)
+        
         self.evm = self.db["db"]
         self.db = tmp
         if self.evm != 0:
