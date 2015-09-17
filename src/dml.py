@@ -51,13 +51,13 @@ class DML(object):
                     return 0
         return -1
     
-    def update(self, table, columns, values, where = {}):
+    def update(self, table, columns, values, where = []):
         #hay que Verificar que no se está tratando de hacer update a un PK de otra tabla
         if (self.syscat.getsPK(table) in columns) or (os.path.isfile(table) == False):
             return -1
                 
         rows = []     
-        if where == {}:
+        if where == []:
             rows = self.sdm.getAll(table)
         else:
             rows = self.whereRipper(table, where)
@@ -67,14 +67,13 @@ class DML(object):
                 
         return 0
         
-    def whereRipper(self, table, where):
+    def whereRipper(self, table, where = []):
         if self.syscat.getType(table, where[0]) == self.syscat.getType(table, where[2]):
             index = self.syscat.getIndex(table, where[0])
             rows = self.sdm.getAll(table)
-            compVar = where[2]
             resultset = []
             for row in rows:
-                if self.compare(where[1], row[1][index], compVar):
+                if self.compare(where[1], row[1][index], where[2]):
                     resultset.append(row)
             return resultset
         return -1
@@ -125,15 +124,26 @@ class DML(object):
                 return False 
    
     #TODO
-    def Select(self, tables, columns = {}, form = '0', where = {}):
+    def join(self,tables):
+        result =  []
+        i = 1
+        
+        #arreglar el formato de las listas para mejor manipulación
+        return self.join_aux()
+     
+    #TODO
+    def Select(self, tables, columns = [], form = '0', where = [], on=[]):
+        #si son varias tablas.
+        if isinstance(tables, list):
+            workWith= self.join(tables, on)
         if self.exists(tables):
-            if columns == {}:
+            if columns == []:
                 if form != '0':
                     return self.FormatXML(self.sdm.getAll(tables))
                 return self.sdm.getAll(tables)
             else:
                 #Verificar que existan las columnas en la tabla.
-                indexes =[]
+                indexes = []
                 for column in columns:
                     #indexes.append(syscat.getindex(column))
                     indexes.append(NaN)
