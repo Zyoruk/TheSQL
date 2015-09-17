@@ -40,7 +40,11 @@ class CLPTestClass(object):
         
     def test1(self):
         print(self.data.listDatabases())
-        self.data.createDatabase("second")
+        print(self.data.listDatabases())
+        self.data.createDatabase("third")
+        #self.data.dropDatabase("first")
+        print(self.data.getStatus())
+        
 
 class DDLTestClass(object):
         
@@ -50,9 +54,9 @@ class DDLTestClass(object):
 
 if __name__ == '__main__':
     print("This is 'Bases de Datos'!")
-    dc = DCTestClass()
+    #dc = DCTestClass()
     clp = CLPTestClass()
     ddl = DDLTestClass()
-    
+    clp.test1()
     
     

@@ -15,9 +15,11 @@ class DataCatalog(object):
                 
     """READ"""
     def getEVM(self):
+        tmp = self.db
         with open(EVM_LIST + '/' + 'VARIABLES.json', 'r') as self.sysCat:
-            self.evm = json.load(self.sysCat)
+            self.db = json.load(self.sysCat)
         self.evm = self.db["db"]
+        self.db = tmp
         if self.evm != 0:
             self.metaPath = self.evm + '/metadata/'
         else:
@@ -27,11 +29,13 @@ class DataCatalog(object):
     def openSysCat(self,table):
         self.getEVM()
         path = self.metaPath + table + '.json'
-        if path:
+        try:
             with open(path, 'r') as self.sysCat:
-                self.db = json.load(self.sysCat)        
+                self.db = json.load(self.sysCat)
+        except IOError:
+            print('Error: no table on DB')        
         else:
-            print('Error: no table on DB')    
+            return                
             
     def hasIndex(self, table):  
         self.openSysCat(table)

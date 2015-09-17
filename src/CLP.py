@@ -35,7 +35,28 @@ class CLP():
             json.dump(evm,vars)
         
     def displayDatabase(self):
-        print('hello')
+        datadb = {'db':0}
+        try:
+            with open(self.varfile, 'r') as sysVAR:
+                evm = json.load(sysVAR)
+        
+        except IOError:
+            with open(self.varfile , 'w') as vars:
+                json.dump(datadb,vars)
+        else:
+            datadb = evm
+            sysVAR.close()        
+        
+        if datadb['db'] != 0:            
+            return datadb['db']
+        else:
+            return 'No working database set'
+            
+    def getStatus(self):
+        status = []
+        status.append(os.geteuid())
+        status.append(self.displayDatabase())
+        return status
         
     '''    
     def start(self, db):
@@ -43,12 +64,6 @@ class CLP():
         
     def stop(self): 
         self.var = 0
-        
-    def getStatus(self):
-        if self.var == 0:
-            return "Main directory" 
-        else:
-            return self.var
     '''    
         
         
