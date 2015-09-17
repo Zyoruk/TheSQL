@@ -3,34 +3,56 @@ from os.path import abspath, dirname, join, isfile
 import os.path
 from os import listdir
 
-WHERE_AM_I = abspath(dirname(__file__))
+EVM_LIST = abspath(dirname('../evm/'))
 
 class DataCatalog(object):
     
     def __init__(self):
         self.db = 0
         self.sysCat = 0
+        self.evm = 0
+        self.metaPath = 0
                 
     """READ"""
+    def getEVM(self):
+        with open(EVM_LIST + '/' + 'VARIABLES.json', 'r') as self.sysCat:
+            self.evm = json.load(self.sysCat)
+        self.evm = self.db["db"]
+        if self.evm != 0:
+            self.metaPath = self.evm + '/metadata/'
+        else:
+            print("Error: EVM not set up")
+        self.sysCat.close()
     
     def openSysCat(self,table):
-        with open(table + '.json', 'r') as self.sysCat:
-            self.db = json.load(self.sysCat)
+        self.getEVM()
+        path = self.metaPath + table + '.json'
+        if path:
+            with open(path, 'r') as self.sysCat:
+                self.db = json.load(self.sysCat)        
+        else:
+            print('Error: no table on DB')    
             
     def hasIndex(self, table):  
         self.openSysCat(table)
+        if self.db == 0:
+            return
         cat = self.db['index']
         self.sysCat.close()       
         return cat
     
     def getFK(self, table):  
         self.openSysCat(table)
+        if self.db == 0:
+            return
         cat = self.db['FK']
         self.sysCat.close()       
         return cat
             
     def getType(self, table, column):
         self.openSysCat(table)
+        if self.db == 0:
+            return
         num = 0                
         for columnsParam in self.db["columns"]:
             if columnsParam["name"] != column:
@@ -40,15 +62,57 @@ class DataCatalog(object):
         cat = self.db["columns"][num]["type"]
         self.sysCat.close()
         return cat
-            
+    
+    def getNulls(self, table):
+        self.openSysCat(table)
+        if self.db == 0:
+            return
+        cat = []
+        num = 0
+        for columnsParam in self.db["columns"]:
+            cat.append(columnsParam["null"])
+            num += 1
+        self.sysCat.close()
+        return cat
+    
+    def getNull(self, table, column):
+        self.openSysCat(table)
+        if self.db == 0:
+            return
+        num = 0                
+        for columnsParam in self.db["columns"]:
+            if columnsParam["name"] != column:
+                num += 1
+            else:
+                break   
+        cat = self.db["columns"][num]["null"]
+        self.sysCat.close()
+        return cat
+    
+    def getTypes(self, table):
+        self.openSysCat(table)
+        if self.db == 0:
+            return
+        cat = []
+        num = 0
+        for columnsParam in self.db["columns"]:
+            cat.append(columnsParam["type"])
+            num += 1
+        self.sysCat.close()
+        return cat
+    
     def getsPK(self, table):
         self.openSysCat(table)
+        if self.db == 0:
+            return
         cat = self.db["PK"]
         self.sysCat.close()
         return cat
     
     def getColNames(self, table): 
         self.openSysCat(table)
+        if self.db == 0:
+            return
         cat = []
         num = 0
         for columnsParam in self.db["columns"]:
@@ -58,7 +122,7 @@ class DataCatalog(object):
         return cat
     
     def getTabNames(self): #TODO check all json files in dir
-        onlyfiles = [ f for f in listdir(WHERE_AM_I) if isfile(join(WHERE_AM_I,f)) ]
+        onlyfiles = [ f for f in listdir(self.metaPath) if isfile(join(self.metaPath,f)) ]
         tables = []
         for jason in onlyfiles:            
             if jason.endswith('.json'):
@@ -69,19 +133,11 @@ class DataCatalog(object):
             tabs.append(tab.split(".",1)[0])
         
         return tables
-                 
-    def getTypes(self, table):
-        self.openSysCat(table)
-        cat = []
-        num = 0
-        for columnsParam in self.db["columns"]:
-            cat.append(columnsParam["type"])
-            num += 1
-        self.sysCat.close()
-        return cat
-    
+
     def getIndex(self, table, column):
         self.openSysCat(table)
+        if self.db == 0:
+            return
         num = 0                
         for columnsParam in self.db["columns"]:
             if columnsParam["name"] != column:
@@ -93,33 +149,30 @@ class DataCatalog(object):
                 
     """WRITE"""
     
-    def setNewDB(self, directory):        
+    def setNewDB(self, directory):                
         with open(directory + 'sysCat.json', 'w') as outfile:
             json.dump({'Index':'false'}, outfile)
           
                 
-    def setNewTable(self, table_name, columns_names, column_type, FK, column_nullability, PK):
+    def setNewTable(self, table_name, columns_names, column_type, column_nullability, PK):
         
         tName = table_name + '.json'
         
         """Check for PK in columns"""
         if PK in columns_names:
-            if not(FK in columns_names):
-                FK = 'None'
                             
             """Not enough names for types"""
             if len(columns_names) != len(column_type) or len(columns_names) != len(column_nullability):
                 #send error
-                return
-            
+                return            
             else:
                 cols = []                           
                 while len(columns_names) != 0:                
                     cols.append({'name':columns_names.pop(-1),'type':column_type.pop(-1),
-                                 'null':column_nullability.pop(-1)})
+                                 'null':column_nullability.pop(-1), 'index':False})
                 
                 table = {'PK':PK,
-                         'FK':FK, 
+                         'FK':False, 
                          'index':False,
                          'enabled':True,
                          'columns':cols}
@@ -134,13 +187,41 @@ class DataCatalog(object):
             
     def dropTable(self, table_name):
         table = table_name + '.json'
-        with open(table , 'r') as sysCat:
-            db = json.load(sysCat)
-        sysCat.close()
-                
-        db["enabled"] = False
+        self.openSysCat(table_name)
+        sysCat.close()               
+        self.db["enabled"] = False
+        
+        with open(table, 'w') as sysCat:
+            json.dump(self.db,sysCat)
+        
+        return
+    
+    def createIndex(self,  indexName, table_name, column):       
+        table = table_name + '.json'                
+        self.openSysCat(table)
+        if self.db["index"] == False:
+            self.db["index"] = [{"index":indexName}]
+        else:
+            self.db["index"].append({"index":indexName})
+        self.sysCat.close()
         
         with open(table, 'w') as sysCat:
             json.dump(db,sysCat)
+        
+        return
+    
+    def setFK(self, table_name, refTable, column):
+        table = table_name + '.json'
+        self.openSysCat(table_name)
+        sysCat.close()
+        
+        if self.db["FK"] == False:
+            self.db["FK"] = column
+        else:
+            print('Error, table has already a FK')
+            return
+        
+        with open(table, 'w') as self.sysCat:
+            json.dump(self.db,self.sysCat)
         
         return
