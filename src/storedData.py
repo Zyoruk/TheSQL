@@ -110,11 +110,19 @@ class StoredData(dataFormat):
     def getAll(self):
         return self.items()
     
+    def fixList(self, l):
+        result  = []
+        for item in l:
+            result.append([item[0]] + item[1])
+        return result
+    
     def erase(self):
         try:
             fh = open(self.path, 'w+')
             towrite = {}
             fh.write(json.JSONEncoder().encode(towrite))
+            for key in self.keys():
+                self.remove(key)
         except IOError:
             return -1
         else:
