@@ -5,7 +5,7 @@ from DDL import DDL
 class DCTestClass(object):
     
     def __init__(self):
-        self.data = DataCatalog('bulma')
+        self.data = DataCatalog()
     
     def test1(self):
                    
@@ -42,14 +42,39 @@ class CLPTestClass(object):
         print(self.data.listDatabases())
         print(self.data.listDatabases())
         self.data.createDatabase("third")
-        #self.data.dropDatabase("first")
+        self.data.dropDatabase("first")
         print(self.data.getStatus())
         
 
 class DDLTestClass(object):
         
     def __init__(self):
-        self.data = DDL()
+        self.dato = DDL()
+        
+    def test0(self):
+        self.dato.setDataBase('third')
+        
+    def test1(self):
+        self.dato.setDataBase('third')
+        names = ['julia','maria','demonios']
+        types = ['int', 'double', 'char']
+        isNull = ['not null', 'null', 'null']    
+        
+        names1 = ['julia','maria','demonios']
+        types1 = ['int', 'double', 'char']
+        isNull1 = ['not null', 'null', 'null']
+        
+        self.dato.createTable('mugre', names, types, isNull , 'julia')
+        self.dato.createTable('moo', names1, types1, isNull1 , 'julia')
+        self.dato.setDataBase(0)
+        
+    def test2(self):
+        self.dato.setDataBase('third')
+        self.dato.dropTable('moo')
+        self.dato.setDataBase(0)
+        
+    def test3(self):
+        self.dato.alterTable('mugre', 'moo', 'demonios')
 
 
 if __name__ == '__main__':
@@ -57,6 +82,8 @@ if __name__ == '__main__':
     #dc = DCTestClass()
     clp = CLPTestClass()
     ddl = DDLTestClass()
-    clp.test1()
+    #clp.test1()
+    ddl.test2()
+    
     
     
