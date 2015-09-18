@@ -3,7 +3,6 @@ from os.path import abspath, dirname, join, isdir
 import os.path
 from os import listdir
 import shutil
-from VARIABLES import VARIABLES
 
 EVM_LIST = abspath(dirname('../evm/'))
 

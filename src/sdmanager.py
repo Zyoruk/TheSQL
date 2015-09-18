@@ -19,7 +19,7 @@ Created on Sep 12, 2015
 '''
 import storedData as SD
 from DataCatalog import DataCatalog
-from struct import  *
+from struct import  pack, unpack
 
 class StoredDataManager(object):
     '''
@@ -45,20 +45,80 @@ class StoredDataManager(object):
                 return -1
             elif isinstance(columns, list) and isinstance (values,list):            
                 indexes = [] 
+                
+                #Verificar que los datos cumplan con los tipos de datos
+                for i in range (0, len(columns)):
+                    if self.validType(self.sysCat.getType(table, columns[i]),values[i]):
+                        continue
+                    else:
+                        return -1
+                    
                 for column in columns:
                     indexes.append(self.sysCat.getIndex(table, column))
+                
+                #Abrimos la tabla
                 sd = SD.StoredData(20,table)
-                sd.udpateMultiple(key, indexes, values)
+                #Data Format to read/write
+                dataFormat = ''
+                for ty in self.sysCat.getTypes(table):
+                    dataFormat += self.getPackFormat(ty) 
+                #Data
+                dataKey = unpack( dataFormat, sd.get(key))
+                for i in indexes:
+                    dataKey[i] = values[i]
+                
+                #Data to bytes
+                dataKey = self.packData(self.sysCat.getTypes(table), dataKey)
+                
+                #Get all previous elements
+                temp = sd.getAll()
+                #Erase the file 
+                sd.erase()
+                #Re- construct the tree with an empty file
+                sd = SD.StoredData(20,table)
+                #Insert each item != removed
+                for item in temp:
+                    if item[0] != key:
+                        sd.insert(item[0], item[1])
+                sd.insert(key , dataKey)
                 sd.dump()
                 return 0                
             else:
-                index = self.sysCat.getIndex(table, column)
-                sd = SD.StoredData(20,table)
-                sd.updateSingle(key, index, values)
-                sd.dump()
-                return 0 
+                if self.validType(self.sysCat.getType(table, columns),values):
+                    index = self.sysCat.getIndex(table, column)
+                    sd = SD.StoredData(20,table)
+                    dataFormat = ''
+                    for ty in self.sysCat.getTypes(table):
+                        dataFormat += self.getPackFormat(ty) 
+                    dataKey = unpack( dataFormat, sd.get(key))
+                    dataKey[index] = values
+                    dataKey = self.packData(self.sysCat.getTypes(table), dataKey)
+                    #Get all previous elements
+                    temp = sd.getAll()
+                    #Erase the file 
+                    sd.erase()
+                    #Re- construct the tree with an empty file
+                    sd = SD.StoredData(20,table)
+                    #Insert each item != removed
+                    for item in temp:
+                        if item[0] != key:
+                            sd.insert(item[0], item[1])
+                    sd.insert(key , dataKey)
+                    sd.dump()
+                    return 0 
+                else:
+                    return -1 
         return -1
     
+    def validType (self, ty, value):
+        if (('DECIMAL' in ty) or (ty == 'INTEGER')) and isinstance(value, int):
+            return True
+        elif (('CHAR' in ty) or 'DATETIME' == ty) and isinstance(ty, str):
+            return True
+        elif value == 'NULL':
+            return True
+        else: return -1 
+        
     def insert(self, table, key, columns, values ):
         
         if self.exists(table) and len(columns) == len(values): 
@@ -68,21 +128,26 @@ class StoredDataManager(object):
                 if self.sysCat.getIndex(table, column) == -1: return -1
                 #Armar las que hacen falta    
                 for value in values:
-                    # Hay que verificar que los tipos de datos sean correctos para columna.
-                    valtype = self.sysCat.getType(table, column)
-                    if self.validType(valtype,value):
-                        Types.append(valtype)
-                        break
-                    else:
-                        return -1
-                    '''
-                    # Si alguna columna a insertar tiene valor NULL, hay que verificar si lo acepta.
-                    elif value == 'NULL':
+                    if value == 'NULL':
                         if self.sysCat.allowsNull(table, column):
-                            pass
+                            # Hay que verificar que los tipos de datos sean correctos para columna.
+                            valtype = self.sysCat.getType(table, column)
+                            if self.validType(valtype,value):
+                                Types.append(valtype)
+                                break
+                            else:
+                                return -1
                         else:
                             return -1
-                    '''
+                    else:
+                        # Hay que verificar que los tipos de datos sean correctos para columna.
+                        valtype = self.sysCat.getType(table, column)
+                        if self.validType(valtype,value):
+                            Types.append(valtype)
+                            break
+                        else:
+                            return -1
+
             cols = columns
             vals = values
             
@@ -130,8 +195,8 @@ class StoredDataManager(object):
         elif 'DECIMAL' in types:
             x = int(types[types.find('(')+1:types.find(',')]) 
             x += int(types[types.find(',')+1:types.find(')')])
-            a = x + 's'
-        elif 'CHAR' in types:
+            a = 'd'
+        elif 'CHAR' in types and types != 'VARCHAR':
             a = types[types.find('(')+1:types.find(')')]
             a += 's'
         elif types == 'VARCHAR':
@@ -141,12 +206,40 @@ class StoredDataManager(object):
         return a
     
     def packData(self, types, values):
-        #VALORES NULOS CON TIPOS DE DATOS ENTEROS ???
         result= []
         for i in range(0, len(types)):
-            result.append(pack(self.getPackFormat(types[i]),values[i]))
+            if values[i] == 'NULL':
+                result.append('4s', 'NULL')
+                continue
+            if 'DECIMAL' in types[i]:
+                a = str(values[i]).split('.')
+                print a
+                intpart = int(types[i][types[i].find('(')+1:types[i].find(',')])
+                print intpart
+                floatpart = int(types[i][types[i].find(',')+1:types[i].find(')')])
+                print floatpart
+                b = a[0][len(a[0])-intpart:]
+                b += '.'
+                b += a[1][len(a[1])-floatpart:]
+                b = float(b)
+                result.append(pack(self.getPackFormat(types[i]),b))
+            else:                
+                result.append(pack(self.getPackFormat(types[i]),values[i]))
         return result
     
+    def getAllValues(self,table, column):
+        if self.exists(table):
+            res = []
+            unpackFormat = ''
+            for ty in self.sysCat.getTypes(table):
+                unpackFormat += self.getPackFormat(ty)
+            
+            i = self.sysCat.getIndex(table, column)
+            sd = SD.StoredData(20, table)
+            for item in sd.getAll():
+                res.append(unpack(unpackFormat, item[1])[i])
+            return res
+        return -1
         
     def getAll(self,table):
         if self.exists(table):
@@ -169,12 +262,18 @@ class StoredDataManager(object):
             l =  SD.StoredData(20,table).getAll()
             for item in l:
                 res.append(item[0][0])
+                return res
         return -1
     
     def remove(self,table,key):
         if self.exists(table):
             sd = SD.StoredData(20,table)
-            sd.remove(key)
+            t = sd.getAll()
+            sd.erase()
+            sd = SD.StoredData(20,table) 
+            for item in t :
+                if item[0] != key:
+                    sd.insert(item[0], item[1])
             sd.dump()
         return -1
     
@@ -190,3 +289,11 @@ class StoredDataManager(object):
             if t == table:
                 return True
         return False
+    
+if __name__ == '__main__':
+    tester = StoredDataManager()
+    tester.exists('test.json')
+    tester.getPackFormat('INTEGER')
+    types = ['INTEGER','DATETIME','CHAR(5)', 'DECIMAL(5,2)', 'VARCHAR']
+    a = tester.packData(types, [5,'23/07/1993','Angel',2929292929.2323,'hola'])
+    print a
