@@ -22,13 +22,13 @@ class DataCatalog(object):
                 self.db = json.load(self.sysCat)
         except IOError:
             self.db = {'db':0}
-            with open(VARFILE , 'w') as vars:
-                json.dump(self.db,vars)
+            with open(VARFILE , 'w') as TMP:
+                json.dump(self.db,TMP)
         
-        self.evm = self.db["db"]
+        self.evm = self.db["db"] 
         self.db = tmp
         if self.evm != 0:
-            self.metaPath = self.evm + '/metadata/'
+            self.metaPath = EVM_LIST + '/' + str(self.evm) + '/metadata/'
         else:
             print("Error: EVM not set up")
         self.sysCat.close()
@@ -161,12 +161,12 @@ class DataCatalog(object):
     """WRITE"""
     
     def setNewDB(self, directory):                
-        with open(directory + 'sysCat.json', 'w') as outfile:
+        with open(str(directory) + 'sysCat.json', 'w') as outfile:
             json.dump({'Index':'false'}, outfile)
           
                 
     def setNewTable(self, table_name, columns_names, column_type, column_nullability, PK):
-        
+        self.getEVM()
         tName = table_name + '.json'
         
         """Check for PK in columns"""
@@ -192,23 +192,27 @@ class DataCatalog(object):
                     #TO DO: Return error
                     print('error')
                 else:
-                    with open(tName, 'w') as sysCat:
-                        json.dump(table,sysCat)
+                    if self.evm != 0:
+                        with open(str(self.metaPath) + '/' + str(tName), 'w') as sysCat:
+                            json.dump(table,sysCat)
         return
             
     def dropTable(self, table_name):
+        self.getEVM()
         table = table_name + '.json'
         self.openSysCat(table_name)
-        sysCat.close()               
+        self.sysCat.close()               
         self.db["enabled"] = False
         
-        with open(table, 'w') as sysCat:
-            json.dump(self.db,sysCat)
+        if self.evm != 0:
+            with open(table, 'w') as sysCat:
+                json.dump(self.db,sysCat)
         
         return
     
-    def createIndex(self,  indexName, table_name, column):       
-        table = table_name + '.json'                
+    def createIndex(self,  indexName, table_name, column):
+        self.getEVM()    
+        table = str(table_name) + '.json'                
         self.openSysCat(table)
         if self.db["index"] == False:
             self.db["index"] = [{"index":indexName}]
@@ -217,22 +221,23 @@ class DataCatalog(object):
         self.sysCat.close()
         
         with open(table, 'w') as sysCat:
-            json.dump(db,sysCat)
+            json.dump(self.db,sysCat)
         
         return
     
     def setFK(self, table_name, refTable, column):
-        table = table_name + '.json'
+        self.getEVM()
+        table = str(table_name) + '.json'
         self.openSysCat(table_name)
-        sysCat.close()
+        self.sysCat.close()
         
         if self.db["FK"] == False:
             self.db["FK"] = column
         else:
             print('Error, table has already a FK')
             return
-        
-        with open(table, 'w') as self.sysCat:
-            json.dump(self.db,self.sysCat)
+        if self.evm != 0:
+            with open(table, 'w') as self.sysCat:
+                json.dump(self.db,self.sysCat)
         
         return

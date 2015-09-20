@@ -20,7 +20,8 @@ Created on Sep 15, 2015
 '''
 
 import storedData as SD
-from struct import  *
+import sdmanager as sdman
+from struct import  pack, unpack
 class TestSDClass(object):
     '''
     classdocs
@@ -74,7 +75,7 @@ class TestSDClass(object):
         self.sd.insert(0, pack('3sii','Rey', 5,10))
         self.sd.insert(1, pack('3sii','Rey', 5,10))
         self.sd.insert(2, pack('3sii','Rey', 5,10))
-        return self.sd.dump()
+        self.sd.dump()
         
     def readall(self):
         result = []
@@ -84,11 +85,15 @@ class TestSDClass(object):
             print unpack('3sii', item[1])
                 
         print result
+        
+    def createManager(self):
+        sdm = sdman.StoredDataManager()
                           
 if __name__ == '__main__':
-    a = '234324324.2323'
-    
-    print '2' in a
-    
-    
-    
+    fh = open ('test.json', 'w+')
+    fh.write('{}')
+    fh.close()
+    test = TestSDClass()
+    test.create()
+    test.insertBinary()
+    test.createManager()

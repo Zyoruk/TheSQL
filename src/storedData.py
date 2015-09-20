@@ -65,33 +65,6 @@ class StoredData(dataFormat):
         else:
             fh.close()
             return 0
-            
-    def udpateMultiple(self,key,indexes, values):
-        temp = self.get(key)
-        if temp != None:
-            i = 0
-            for index in indexes:
-                try:
-                    temp[index] = values[i]
-                except IndexError:
-                    return -1
-                else:
-                    self.insert(key, temp)
-                    i+=1
-            return 0                
-        return -1
-    
-    def updateSingle(self,key,index,value):        
-        temp = self.get(key)
-        if temp != None:
-            try:
-                temp[index] = value
-            except IndexError:
-                return -1
-            else:
-                self.insert(key, temp)
-                return 0                
-        return -1
         
     def search(self,key):
         res = self.get(key)
@@ -121,16 +94,8 @@ class StoredData(dataFormat):
             fh = open(self.path, 'w+')
             towrite = {}
             fh.write(json.JSONEncoder().encode(towrite))
-            for key in self.keys():
-                self.remove(key)
         except IOError:
             return -1
         else:
             fh.close()
             return 0
-    
-    def remove(self,key):
-        if self.get(key) != None:
-            dataFormat.remove(self, key)
-            return 0
-        return -1
