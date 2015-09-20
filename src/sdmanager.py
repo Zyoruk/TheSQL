@@ -32,7 +32,7 @@ class StoredDataManager(object):
         Constructor
         '''
         self.sysCat = DataCatalog() 
-        self.tableList = self.sysCat.getTabNames()
+
         
     def search(self, table, key):
         if (self.exists(table)):
@@ -129,7 +129,7 @@ class StoredDataManager(object):
                 #Armar las que hacen falta    
                 for value in values:
                     if value == 'NULL':
-                        if self.sysCat.allowsNull(table, column):
+                        if self.sysCat.getNull(table, column):
                             # Hay que verificar que los tipos de datos sean correctos para columna.
                             valtype = self.sysCat.getType(table, column)
                             if self.validType(valtype,value):
@@ -156,7 +156,7 @@ class StoredDataManager(object):
                 if col in columns:
                     pass
                 else: 
-                    if self.sysCat.allowsNull(table, col):
+                    if self.sysCat.getNull(table, col):
                         cols.append(col)
                         Types.append(self.sysCat.getType(table, col))
                         vals.append('NULL')
@@ -283,17 +283,34 @@ class StoredDataManager(object):
             sd.erase()
             sd.dump()            
         return -1
+    def getAllasArray(self,table):
+        if self.exists(table):
+            sd = SD.StoredData(20, table)
+            return self.fixList(sd.getAll())
+        return -1 
+    def fixList(self, l):
+        result  = []
+        for item in l:
+            result.append([item[0]] + item[1])
+        return result
     
     def exists(self,table):        
-        for t in self.tableList:
+        for t in self.sysCat.getTabNames():
             if t == table:
                 return True
         return False
     
+class TesterClass(object):
+    def __init__(self):
+        self.syscat = DataCatalog()
+        self.sdman = StoredDataManager()
+        
+        self.syscat.setNewDB('TDB')
+        self.syscat.setNewTable('test1', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'],'ID')
+        self.syscat.setNewTable('test2', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'],'ID')
+    
+    def test1(self):
+        self.sdman.insert('test.json', 0, ['Nom','Age'], ['Luis', '22'])
+    
 if __name__ == '__main__':
-    tester = StoredDataManager()
-    tester.exists('test.json')
-    tester.getPackFormat('INTEGER')
-    types = ['INTEGER','DATETIME','CHAR(5)', 'DECIMAL(5,2)', 'VARCHAR']
-    a = tester.packData(types, [5,'23/07/1993','Angel',2929292929.2323,'hola'])
-    print a
+    t = TesterClass()

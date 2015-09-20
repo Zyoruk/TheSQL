@@ -3,10 +3,7 @@ from os.path import abspath, dirname, join, isdir
 import os.path
 from os import listdir
 import shutil
-<<<<<<< HEAD
-=======
 import json
->>>>>>> 68636a3833f75ad770cd2d1d592a0efcd41c1dad
 
 EVM_LIST = abspath(dirname('../evm/'))
 

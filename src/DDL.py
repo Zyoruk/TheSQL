@@ -5,6 +5,7 @@ import os.path
 import json
 from serial.tools.list_ports_windows import REGSAM
 
+
 EVM_LIST = abspath(dirname('../evm/'))
 
 class DDL():
