@@ -18,13 +18,16 @@ class DDL():
         with open(self.varfile , 'w') as vars:
             json.dump(evm,vars)
         
-    def createTable(self,table_name, columns_names, column_type, column_nullability, PK):
+    def createTable(self,table_name, columns_names, column_type,
+                    column_nullability, PK):
+                        
         with open(self.varfile, 'r') as vars:
             file = json.load(vars)
         cat = self.db["db"]
         vars.close()
         if cat != 0:
-            self.dato.setNewTable(table_name, columns_names, column_type, column_nullability, PK)
+            self.dato.setNewTable(table_name, columns_names, column_type,
+                                  column_nullability, PK)
         else:
             print('Error: EVM not set up.')
     
