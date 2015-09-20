@@ -26,7 +26,7 @@ class DDL():
         self.infoPath = EVM_LIST + '/' + str(db) + '/index/'
         with open(self.varfile , 'w') as TMP:
             json.dump(self.evm,TMP)
-        
+            
     def createTable(self,table_name, columns_names, column_type, column_nullability, PK):
         if self.evm != 0:
             with open(self.varfile, 'r') as TMP:
@@ -82,6 +82,7 @@ class DDL():
             print('Error: EVM not set up.')
                 
     def alterTable(self, table_name, refTable, column):
+        self.dato.setFK(table_name, refTable, column)
         if self.evm != 0:
             self.dato.setFK(table_name, refTable, column)
         else:
