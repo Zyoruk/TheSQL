@@ -186,7 +186,6 @@ class StoredDataManager(object):
             #con los datos ordenados, hay que tomar cada uno y con su tipo, convertirlos a bytes
             convertedDataList = self.packData(Types, values)
             sd = SD.StoredData(5,'' + table +'.json') 
-            print convertedDataList
             sd.insert(key, convertedDataList)
             sd.dump()
         else:
@@ -299,6 +298,7 @@ class StoredDataManager(object):
     def fixList(self,l,fmt):
         result  = []
         for item in l:
+            print [item[1]]
             t = []
             data = unpack(fmt, item[1])
             for i in data:
@@ -329,11 +329,12 @@ class TesterClass(object):
         self.ddl.setDataBase('naDB')
         self.syscat.setNewTable('test1', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'],'ID')
         self.syscat.setNewTable('test2', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'],'ID')
-        self.syscat.metaPath
-        self.sdman.insert('test1', 0, ['Nom','Age'], ['Luis', 22])
-        self.sdman.insert('test2', 0, ['Nom','Age'], ['a', 99])
+        self.sdman.insert('test1', 0, ['Nom','Age'], ['A', 1])
+        self.sdman.insert('test1', 1, ['Nom','Age'], ['B', 2])
+        self.sdman.insert('test1', 2, ['Nom','Age'], ['C', 3])
+        self.sdman.insert('test1', 3, ['Nom','Age'], ['D', 4])
+        self.sdman.insert('test1', 4, 'Nom', 'D')
         print self.sdman.getAllasArray('test1')
-        print self.sdman.getAllasArray('test2')
     def test2(self):
         self.sdman.update('test1', 0, ['Nom','Age'], ['Andres',54])
         print self.sdman.getAllasArray('test1')
@@ -349,7 +350,14 @@ class TesterClass(object):
         y = unpack ('100s', p )
         print y
 
-        
+    def test5(self):
+        self.syscat.setNewTable('test3', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NULL'],'ID')
+        self.sdman.insert('test3', 1, ['Nom','Age'], ['B', 2])
+        self.sdman.insert('test3', 2, ['Nom','Age'], ['C', 3])
+        self.sdman.insert('test3', 3, ['Nom','Age'], ['D', 4])
+        self.sdman.insert('test3', 4, ['Nom'], ['D'])
+        self.sdman.insert('test3', 5, ['Age'],[0])
+        self.sdman.getAllasArray('test3')
 if __name__ == '__main__':
     t = TesterClass()
-    t.test3()
+    t.test5()
