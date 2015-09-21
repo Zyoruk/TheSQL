@@ -149,10 +149,21 @@ class DataCatalog(object):
         self.sysCat.close()
         return cat
     
+<<<<<<< HEAD
     ''' Return all the tables of a DB '''
     def getTabNames(self): 
         self.getEVM()
         tables = []
+=======
+    def getTabNames(self): #TODO check all json files in dir
+        self.getEVM()
+        onlyfiles = [ f for f in listdir(self.metaPath) if isfile(join(self.metaPath,f)) ]
+        tables = []
+        for jason in onlyfiles:
+            if jason.endswith('.json'):
+                tables.append(jason.split('.')[0])
+        
+>>>>>>> caabc4ea5a5051d570502771f1de1909b45ebe7c
         tabs = []
         if self.evm != 0:
             onlyfiles = [ f for f in listdir(self.metaPath) if isfile(join(self.metaPath,f)) ]
@@ -253,8 +264,21 @@ class DataCatalog(object):
     def setFK(self, table_name, refTable, column):
         self.getEVM()
         self.openSysCat(table_name)
+<<<<<<< HEAD
         table = table_name + '.json'
         log = 'Error 11: EVM not set up'
+=======
+        self.sysCat.cslose()
+        
+        if self.db["FK"] == False:
+            self.db["FK"] = column
+        else:
+            print('Error, table has already a FK')
+            return
+        if self.evm != 0:
+            with open(table, 'w') as self.sysCat:
+                json.dump(self.db,self.sysCat)
+>>>>>>> caabc4ea5a5051d570502771f1de1909b45ebe7c
         
         #TODO: Types are not validated since is out of requirements.
         if column in self.getColNames(refTable):

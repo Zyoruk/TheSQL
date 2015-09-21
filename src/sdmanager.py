@@ -31,12 +31,11 @@ class StoredDataManager(object):
         '''
         Constructor
         '''
-        self.sysCat = DataCatalog() 
-        self.tableList = self.sysCat.getTabNames()
-        
+        self.sysCat = DataCatalog()
+
     def search(self, table, key):
         if (self.exists(table)):
-            return SD.StoredData(20 , table).search(key)
+            return SD.StoredData(5 , '' + table +'.json').search(key)
         return -1 
 
     def update(self, table, key, columns, values ):
@@ -54,28 +53,30 @@ class StoredDataManager(object):
                         return -1
                     
                 for column in columns:
-                    indexes.append(self.sysCat.getIndex(table, column))
+                    indexes.append(self.sysCat.getIndex(table, column)-1)
                 
                 #Abrimos la tabla
-                sd = SD.StoredData(20,table)
+                sd = SD.StoredData(5,'' + table +'.json')
                 #Data Format to read/write
                 dataFormat = ''
-                for ty in self.sysCat.getTypes(table):
+                types = self.sysCat.getTypes(table)[:-1]
+                types.sort(cmp=None, key=None, reverse=True)
+                for ty in types:
                     dataFormat += self.getPackFormat(ty) 
-                #Data
-                dataKey = unpack( dataFormat, sd.get(key))
+                #Data                
+                dataKey = list(unpack( dataFormat, sd.get(key)))
                 for i in indexes:
                     dataKey[i] = values[i]
                 
                 #Data to bytes
-                dataKey = self.packData(self.sysCat.getTypes(table), dataKey)
+                dataKey = self.packData(self.sysCat.getTypes(table)[1:], dataKey)
                 
                 #Get all previous elements
                 temp = sd.getAll()
                 #Erase the file 
                 sd.erase()
                 #Re- construct the tree with an empty file
-                sd = SD.StoredData(20,table)
+                sd = SD.StoredData(5,'' + table +'.json')
                 #Insert each item != removed
                 for item in temp:
                     if item[0] != key:
@@ -85,20 +86,22 @@ class StoredDataManager(object):
                 return 0                
             else:
                 if self.validType(self.sysCat.getType(table, columns),values):
-                    index = self.sysCat.getIndex(table, column)
-                    sd = SD.StoredData(20,table)
+                    index = self.sysCat.getIndex(table, columns)-1
+                    sd = SD.StoredData(5,'' + table +'.json')
                     dataFormat = ''
-                    for ty in self.sysCat.getTypes(table):
-                        dataFormat += self.getPackFormat(ty) 
-                    dataKey = unpack( dataFormat, sd.get(key))
+                    types = self.sysCat.getTypes(table)[:-1]
+                    types.sort(cmp=None, key=None, reverse=True)
+                    for ty in types:
+                        dataFormat += self.getPackFormat(ty)
+                    dataKey = list(unpack( dataFormat, sd.get(key)))
                     dataKey[index] = values
-                    dataKey = self.packData(self.sysCat.getTypes(table), dataKey)
+                    dataKey = self.packData(types, dataKey)
                     #Get all previous elements
                     temp = sd.getAll()
                     #Erase the file 
                     sd.erase()
                     #Re- construct the tree with an empty file
-                    sd = SD.StoredData(20,table)
+                    sd = SD.StoredData(5,'' + table +'.json')
                     #Insert each item != removed
                     for item in temp:
                         if item[0] != key:
@@ -121,7 +124,7 @@ class StoredDataManager(object):
         
     def insert(self, table, key, columns, values ):
         
-        if self.exists(table) and len(columns) == len(values): 
+        if self.exists(table) and len(columns) == len(values):
             Types = []
             for column in columns:
                 #Existe la columna?
@@ -129,7 +132,7 @@ class StoredDataManager(object):
                 #Armar las que hacen falta    
                 for value in values:
                     if value == 'NULL':
-                        if self.sysCat.allowsNull(table, column):
+                        if self.sysCat.getNull(table, column):
                             # Hay que verificar que los tipos de datos sean correctos para columna.
                             valtype = self.sysCat.getType(table, column)
                             if self.validType(valtype,value):
@@ -152,20 +155,20 @@ class StoredDataManager(object):
             vals = values
             
             #Verificar columnas que hacen falta, y si hacen falta, ver si aceptan null
-            for col in self.sysCat.getColNames(table):
+            for col in self.sysCat.getColNames(table)[:-1]:
                 if col in columns:
                     pass
                 else: 
-                    if self.sysCat.allowsNull(table, col):
+                    if self.sysCat.getNull(table, col):
                         cols.append(col)
                         Types.append(self.sysCat.getType(table, col))
                         vals.append('NULL')
                     else:
                         return -1
-                    
-
+            
             #ordenar los datos con respecto al orden de la tabla
             temp  = self.sysCat.getColNames(table)
+            temp.sort(cmp=None, key=None, reverse=True)            
             for i in range(0, len(cols)):
                 for j in range (0, len(cols)):
                     if temp[j] == cols[i]:
@@ -182,7 +185,8 @@ class StoredDataManager(object):
                         Types[i] = t
             #con los datos ordenados, hay que tomar cada uno y con su tipo, convertirlos a bytes
             convertedDataList = self.packData(Types, values)
-            sd = SD.StoredData(20,table) 
+            sd = SD.StoredData(5,'' + table +'.json') 
+            print convertedDataList
             sd.insert(key, convertedDataList)
             sd.dump()
         else:
@@ -206,25 +210,24 @@ class StoredDataManager(object):
         return a
     
     def packData(self, types, values):
-        result= []
+        result= ''
         for i in range(0, len(types)):
             if values[i] == 'NULL':
-                result.append('4s', 'NULL')
+                result+= (pack('4s', 'NULL'))
                 continue
             if 'DECIMAL' in types[i]:
                 a = str(values[i]).split('.')
-                print a
                 intpart = int(types[i][types[i].find('(')+1:types[i].find(',')])
-                print intpart
                 floatpart = int(types[i][types[i].find(',')+1:types[i].find(')')])
-                print floatpart
                 b = a[0][len(a[0])-intpart:]
                 b += '.'
                 b += a[1][len(a[1])-floatpart:]
                 b = float(b)
-                result.append(pack(self.getPackFormat(types[i]),b))
-            else:                
-                result.append(pack(self.getPackFormat(types[i]),values[i]))
+                result += (pack(self.getPackFormat(types[i]),b))
+            else:    
+                fmt = self.getPackFormat(types[i])
+                toadd = pack(fmt,values[i])            
+                result += toadd
         return result
     
     def getAllValues(self,table, column):
@@ -235,7 +238,7 @@ class StoredDataManager(object):
                 unpackFormat += self.getPackFormat(ty)
             
             i = self.sysCat.getIndex(table, column)
-            sd = SD.StoredData(20, table)
+            sd = SD.StoredData(5, table)
             for item in sd.getAll():
                 res.append(unpack(unpackFormat, item[1])[i])
             return res
@@ -248,7 +251,7 @@ class StoredDataManager(object):
             for ty in self.sysCat.getTypes(table):
                 unpackFormat += self.getPackFormat(ty)
             
-            for item in SD.StoredData(20,table).getAll():
+            for item in SD.StoredData(5,'' + table +'.json').getAll():
                 t = []                
                 t.append(item)
                 t.append(unpack(unpackFormat, item[1]))
@@ -259,7 +262,7 @@ class StoredDataManager(object):
     def getAllKeys(self, table):
         if self.exists(table):
             res = []
-            l =  SD.StoredData(20,table).getAll()
+            l =  SD.StoredData(5,'' + table +'.json').getAll()
             for item in l:
                 res.append(item[0][0])
                 return res
@@ -267,10 +270,10 @@ class StoredDataManager(object):
     
     def remove(self,table,key):
         if self.exists(table):
-            sd = SD.StoredData(20,table)
+            sd = SD.StoredData(5,'' + table +'.json')
             t = sd.getAll()
             sd.erase()
-            sd = SD.StoredData(20,table) 
+            sd = SD.StoredData(5,'' + table +'.json') 
             for item in t :
                 if item[0] != key:
                     sd.insert(item[0], item[1])
@@ -279,21 +282,74 @@ class StoredDataManager(object):
     
     def erase(self,table):
         if self.exists(table):
-            sd = SD.StoredData(20, table)
+            sd = SD.StoredData(5, table)
             sd.erase()
             sd.dump()            
         return -1
     
-    def exists(self,table):        
-        for t in self.tableList:
-            if t == table:
-                return True
+    def getAllasArray(self,table):
+        if self.exists(table):
+            sd = SD.StoredData(5, '' + table +'.json')
+            fmt = ''
+            for ty in self.sysCat.getTypes(table)[1:]:
+                fmt += self.getPackFormat(ty)
+            return self.fixList(sd.getAll(), fmt)
+        return -1
+     
+    def fixList(self,l,fmt):
+        result  = []
+        for item in l:
+            t = []
+            data = unpack(fmt, item[1])
+            for i in data:
+                if '\x00' in str(i):
+                    t.append(str(i)[0:str(i).index('\x00')])
+                else:
+                    t.append(i)
+                    
+            
+            
+            result.append([item[0]] + t)
+        return result
+    
+    def exists(self,table):
+        a = self.sysCat.getTabNames()        
+        if table in a:
+            return True
         return False
     
+import DDL
+class TesterClass(object):
+    def __init__(self):
+        self.sdman = StoredDataManager()
+        self.ddl = DDL.DDL(self.sdman)
+        self.syscat = DataCatalog()
+        
+    def test1(self):
+        self.ddl.setDataBase('naDB')
+        self.syscat.setNewTable('test1', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'],'ID')
+        self.syscat.setNewTable('test2', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'],'ID')
+        self.syscat.metaPath
+        self.sdman.insert('test1', 0, ['Nom','Age'], ['Luis', 22])
+        self.sdman.insert('test2', 0, ['Nom','Age'], ['a', 99])
+        print self.sdman.getAllasArray('test1')
+        print self.sdman.getAllasArray('test2')
+    def test2(self):
+        self.sdman.update('test1', 0, ['Nom','Age'], ['Andres',54])
+        print self.sdman.getAllasArray('test1')
+    
+    def test3(self):
+        self.sdman.update('test1', 0, 'Nom', 'asas')
+        self.sdman.update('test1', 0, 'Age', 100)
+        print self.sdman.getAllasArray('test1')
+        
+    def test4(self):
+        strs = "LASB"
+        p = pack ('100s', strs)
+        y = unpack ('100s', p )
+        print y
+
+        
 if __name__ == '__main__':
-    tester = StoredDataManager()
-    tester.exists('test.json')
-    tester.getPackFormat('INTEGER')
-    types = ['INTEGER','DATETIME','CHAR(5)', 'DECIMAL(5,2)', 'VARCHAR']
-    a = tester.packData(types, [5,'23/07/1993','Angel',2929292929.2323,'hola'])
-    print a
+    t = TesterClass()
+    t.test3()

@@ -4,7 +4,10 @@ import os.path
 from os import listdir
 import shutil
 import json
+<<<<<<< HEAD
 from Logs import Logs
+=======
+>>>>>>> caabc4ea5a5051d570502771f1de1909b45ebe7c
 
 EVM_LIST = abspath(dirname('../evm/'))
 
