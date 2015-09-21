@@ -131,7 +131,7 @@ class StoredDataManager(object):
                 if self.sysCat.getIndex(table, column) == -1: return -1
                 #Armar las que hacen falta    
                 for value in values:
-                    if value == 'NULL':
+                    if value == None or value == NaN:
                         if self.sysCat.getNull(table, column):
                             # Hay que verificar que los tipos de datos sean correctos para columna.
                             valtype = self.sysCat.getType(table, column)
@@ -322,7 +322,7 @@ import DDL
 class TesterClass(object):
     def __init__(self):
         self.sdman = StoredDataManager()
-        self.ddl = DDL.DDL(self.sdman)
+        #self.ddl = DDL.DDL(self.sdman)
         self.syscat = DataCatalog()
         
     def test1(self):
@@ -358,6 +358,7 @@ class TesterClass(object):
         self.sdman.insert('test3', 4, ['Nom'], ['D'])
         self.sdman.insert('test3', 5, ['Age'],[0])
         self.sdman.getAllasArray('test3')
+from math import isnan
 if __name__ == '__main__':
     t = TesterClass()
     t.test5()

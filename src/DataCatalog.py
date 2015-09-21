@@ -3,7 +3,6 @@ from os.path import abspath, dirname, join, isfile
 import os.path
 from os import listdir
 from Logs import Logs
-
 EVM_LIST = abspath(dirname('../evm/'))
 VARFILE = EVM_LIST + '/' + 'VARIABLES.json'
 
@@ -226,7 +225,7 @@ class DataCatalog(object):
         self.db["enabled"] = False
         
         if self.evm != 0:
-            with open(table, 'w') as sysCat:
+            with open(table_name, 'w') as sysCat:
                 json.dump(self.db,sysCat)
         
         log = 'Table ' + table_name +  ' dropped successfully.'
