@@ -21,7 +21,7 @@ Created on Sep 7, 2015
 
 
 from btree import BPlusTree as dataFormat
-from os.path import abspath, dirname, join
+from os.path import abspath, dirname, join, isfile
 from json import JSONDecoder, JSONEncoder
 
 class StoredData(dataFormat):
@@ -31,33 +31,40 @@ class StoredData(dataFormat):
         self.order = order
         self.tablename = path
         self.path = abspath(join(dirname(__file__), path))
-        try:
-            fh = open(self.path,'r')
-            t = fh.readline()
-            j = JSONDecoder().decode(t)
-            for item in j:
-                formated = JSONDecoder().decode(j[item])
-                formated2 = JSONDecoder().decode(item)
-                self.insert(formated2, formated)
-        except IOError:
-            print("Table not found")
+        if isfile(self.path):            
+            try:
+                fh = open(self.path,'r')
+                t = fh.readline()
+                j = JSONDecoder().decode(t)
+                for item in j:
+                    formated = JSONDecoder().decode(j[item])
+                    formated2 = JSONDecoder().decode(item)
+                    self.insert(formated2, formated)
+            except IOError:
+                print("Table not found")
+            else:
+                fh.close()
         else:
+            fh = open(self.path,'w+')
+            fh.write('{}')
             fh.close()
             
     def dump(self):
         try:
-            fh = open(self.path, 'w+')
-            towrite = {}
-            for item in self.items():
-                snd = item[1]
-                snd = JSONEncoder().encode(snd)
-                towrite[item[0]] = snd
-            fh.write(JSONEncoder().encode(towrite))
+            if isfile(self.path):
+                fh = open(self.path, 'w+')
+                towrite = {}
+                for item in self.items():
+                    snd = item[1]
+                    snd = JSONEncoder().encode(snd)
+                    towrite[item[0]] = snd
+                fh.write(JSONEncoder().encode(towrite))
+                fh.close()
+                return 0
+            else:
+                return -1
         except IOError:
             return -1
-        else:
-            fh.close()
-            return 0
         
     def search(self,key):
         res = self.get(key)
@@ -78,15 +85,15 @@ class StoredData(dataFormat):
     
     def erase(self):
         try:
-            fh = open(self.path, 'w+')
-            towrite = {}
-            fh.write(JSONEncoder().encode(towrite))
-            dataFormat.__init__(self, self.order)
+            if isfile(self.path):
+                fh = open(self.path, 'w+')
+                towrite = {}
+                fh.write(JSONEncoder().encode(towrite))
+                dataFormat.__init__(self, self.order)
+            else:
+                return -1
         except IOError:
             return -1
-        else:
-            fh.close()
-            return 0
 
 from struct import pack, unpack      
 class TestSDClass(object):

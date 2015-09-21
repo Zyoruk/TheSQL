@@ -133,11 +133,12 @@ class DataCatalog(object):
         return cat
     
     def getTabNames(self): #TODO check all json files in dir
+        self.getEVM()
         onlyfiles = [ f for f in listdir(self.metaPath) if isfile(join(self.metaPath,f)) ]
         tables = []
-        for jason in onlyfiles:            
+        for jason in onlyfiles:
             if jason.endswith('.json'):
-                tables.append(jason)
+                tables.append(jason.split('.')[0])
         
         tabs = []
         for tab in tables:
@@ -229,7 +230,7 @@ class DataCatalog(object):
         self.getEVM()
         table = str(table_name) + '.json'
         self.openSysCat(table_name)
-        self.sysCat.close()
+        self.sysCat.cslose()
         
         if self.db["FK"] == False:
             self.db["FK"] = column

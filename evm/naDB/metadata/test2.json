@@ -1,0 +1,1 @@
+{"PK": "ID", "FK": false, "enabled": true, "columns": [{"index": false, "null": "NOT NULL", "type": "INTEGER", "name": "Age"}, {"index": false, "null": "NOT NULL", "type": "VARCHAR", "name": "Nom"}, {"index": false, "null": "NOT NULL", "type": "INTEGER", "name": "ID"}], "index": false}
