@@ -8,7 +8,7 @@ EVM_LIST = abspath(dirname('../evm/'))
 
 class DDL(object):
     
-    def __init__(self, sdman):
+    def __init__(self):
         self.dato = DataCatalog()
         #self.sdman = sdman
         self.varfile = EVM_LIST + '/' + 'VARIABLES.json'

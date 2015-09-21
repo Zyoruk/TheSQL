@@ -260,11 +260,11 @@ class DataCatalog(object):
         if column in self.getColNames(refTable):
             if self.evm != 0:                
                 if self.db["FK"] == False:
-                    self.db["FK"] = [{'Table':refTable},{'Column':column}]
+                    self.db["FK"] = [{'Table':refTable,'Column':column}]
                     print(self.db)
                 else:
                     arr = self.db["FK"]
-                    arr.append({'Table':refTable},{'Column':column})
+                    arr.append({'Table':refTable,'Column':column})
                     self.db["FK"] = arr
                 
                 log = 'FK successfully updated'

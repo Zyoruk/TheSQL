@@ -114,7 +114,7 @@ if __name__ == '__main__':
     clp.test3()
     ddl.test0()
     #log.test1()
-    dc.test7()
+    dc.test6()
     
     
     
