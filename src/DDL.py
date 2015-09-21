@@ -3,15 +3,14 @@ from sdmanager import StoredDataManager
 from os.path import abspath, dirname
 import os.path
 import json
-from serial.tools.list_ports_windows import REGSAM
 
 EVM_LIST = abspath(dirname('../evm/'))
 
 class DDL():
-    
-    def __init__(self, sdman):
+    #TODO: Enable sdman
+    def __init__(self):
         self.dato = DataCatalog()
-        self.sdman = sdman
+        #self.sdman = sdman
         self.varfile = EVM_LIST + '/' + 'VARIABLES.json'
         self.evm = 0
         self.metaPath = 0
@@ -19,12 +18,19 @@ class DDL():
         self.indexPath = 0
         
     def setDataBase(self,db):
-        self.evm = {'db':db}
-        self.metaPath = EVM_LIST + '/' + str(db) + '/metadata/'
-        self.infoPath = EVM_LIST + '/' + str(db) + '/info/'
-        self.infoPath = EVM_LIST + '/' + str(db) + '/index/'
-        with open(self.varfile , 'w') as TMP:
-            json.dump(self.evm,TMP)
+        if os.path.isdir(EVM_LIST + '/' + db):
+            self.evm = {'db':db}
+            self.metaPath = EVM_LIST + '/' + str(db) + '/metadata/'
+            self.infoPath = EVM_LIST + '/' + str(db) + '/info/'
+            self.infoPath = EVM_LIST + '/' + str(db) + '/index/'
+            with open(self.varfile , 'w') as TMP:
+                json.dump(self.evm,TMP)
+            return 'DB ' + db + ' set.'
+        else:
+            log = 'Error 1: No existing DB'
+            self.sendError(log)
+            return log
+            
             
     def createTable(self,table_name, columns_names, column_type, column_nullability, PK):
         if self.evm != 0:
@@ -81,8 +87,11 @@ class DDL():
             print('Error: EVM not set up.')
                 
     def alterTable(self, table_name, refTable, column):
-        self.dato.setFK(table_name, refTable, column)
         if self.evm != 0:
             self.dato.setFK(table_name, refTable, column)
         else:
             print('Error: EVM not set up.')
+            
+    def sendError(self, log):
+        errorModule = Logs()
+        errorModule.Error(log)

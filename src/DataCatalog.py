@@ -2,6 +2,7 @@ import json
 from os.path import abspath, dirname, join, isfile
 import os.path
 from os import listdir
+from Logs import Logs
 
 EVM_LIST = abspath(dirname('../evm/'))
 VARFILE = EVM_LIST + '/' + 'VARIABLES.json'
@@ -14,7 +15,7 @@ class DataCatalog(object):
         self.evm = 0
         self.metaPath = 0
                 
-    """READ"""
+    """ ***************** Setup EVM ***************** """
     def getEVM(self):
         tmp = self.db
         try:
@@ -24,14 +25,17 @@ class DataCatalog(object):
             self.db = {'db':0}
             with open(VARFILE , 'w') as TMP:
                 json.dump(self.db,TMP)
-        
+        else:
+            self.sysCat.close()
+            
         self.evm = self.db["db"] 
         self.db = tmp
+        
         if self.evm != 0:
             self.metaPath = EVM_LIST + '/' + str(self.evm) + '/metadata/'
         else:
-            print("Error: EVM not set up")
-        self.sysCat.close()
+            log = 'Error 11: EVM not set up'
+            self.sendError(log)
     
     def openSysCat(self,table):
         self.getEVM()
@@ -40,18 +44,25 @@ class DataCatalog(object):
             with open(path, 'r') as self.sysCat:
                 self.db = json.load(self.sysCat)
         except IOError:
-            print('Error: no table on DB')        
+            log = 'Error 1: no' + str(table) + 'table on DB'
+            self.sendError(log)
         else:
-            return                
+            self.sysCat.close()               
             
+    """ ********************************************* """
+    
+    """ ***************** READ ***************** """
+    
+    '''Return array of index names'''        
     def hasIndex(self, table):  
         self.openSysCat(table)
         if self.db == 0:
-            return
+            return 0
         cat = self.db['index']
         self.sysCat.close()       
         return cat
     
+    '''Return False or an array of {'table':ref_table , 'Column':column}'''
     def getFK(self, table):  
         self.openSysCat(table)
         if self.db == 0:
@@ -59,7 +70,8 @@ class DataCatalog(object):
         cat = self.db['FK']
         self.sysCat.close()       
         return cat
-            
+    
+    ''' Return the type of a column '''        
     def getType(self, table, column):
         self.openSysCat(table)
         if self.db == 0:
@@ -74,6 +86,7 @@ class DataCatalog(object):
         self.sysCat.close()
         return cat
     
+    ''' Return all the constrains of a table '''
     def getNulls(self, table):
         self.openSysCat(table)
         if self.db == 0:
@@ -86,6 +99,7 @@ class DataCatalog(object):
         self.sysCat.close()
         return cat
     
+    ''' Return the constrains of a column '''
     def getNull(self, table, column):
         self.openSysCat(table)
         if self.db == 0:
@@ -100,6 +114,7 @@ class DataCatalog(object):
         self.sysCat.close()
         return cat
     
+    '''Return all the types of the columns in a table'''
     def getTypes(self, table):
         self.openSysCat(table)
         if self.db == 0:
@@ -112,6 +127,7 @@ class DataCatalog(object):
         self.sysCat.close()
         return cat
     
+    '''Return the name of the Pks table'''
     def getsPK(self, table):
         self.openSysCat(table)
         if self.db == 0:
@@ -120,6 +136,7 @@ class DataCatalog(object):
         self.sysCat.close()
         return cat
     
+    ''' Return all the names of the columns of a table '''
     def getColNames(self, table): 
         self.openSysCat(table)
         if self.db == 0:
@@ -132,19 +149,24 @@ class DataCatalog(object):
         self.sysCat.close()
         return cat
     
-    def getTabNames(self): #TODO check all json files in dir
-        onlyfiles = [ f for f in listdir(self.metaPath) if isfile(join(self.metaPath,f)) ]
+    ''' Return all the tables of a DB '''
+    def getTabNames(self): 
+        self.getEVM()
         tables = []
-        for jason in onlyfiles:            
-            if jason.endswith('.json'):
-                tables.append(jason)
-        
         tabs = []
-        for tab in tables:
-            tabs.append(tab.split(".",1)[0])
-        
-        return tables
-
+        if self.evm != 0:
+            onlyfiles = [ f for f in listdir(self.metaPath) if isfile(join(self.metaPath,f)) ]
+            for jason in onlyfiles:         
+                if jason.endswith('.json'):
+                    tables.append(jason)            
+            for tab in tables:
+                tabs.append(tab.split(".",1)[0])
+        else:
+            log = 'Error 11: EVM not set up'
+            self.sendError(log)
+        return tabs
+    
+    ''' Return all the names of index of a table '''
     def getIndex(self, table, column):
         self.openSysCat(table)
         if self.db == 0:
@@ -158,24 +180,20 @@ class DataCatalog(object):
         self.sysCat.close()
         return num
                 
-    """WRITE"""
+    """ ***************** WRITE ***************** """
     
-    def setNewDB(self, directory):                
-        with open(str(directory) + 'sysCat.json', 'w') as outfile:
-            json.dump({'Index':'false'}, outfile)
-          
-                
+    ''' Creates new table '''            
     def setNewTable(self, table_name, columns_names, column_type, column_nullability, PK):
         self.getEVM()
         tName = table_name + '.json'
+        log = 'Table created successfully.'
         
-        """Check for PK in columns"""
         if PK in columns_names:
-                            
-            """Not enough names for types"""
+                                        
             if len(columns_names) != len(column_type) or len(columns_names) != len(column_nullability):
-                #send error
-                return            
+                log = 'Error 21: Not enough names for types'
+                self.sendError(log)
+                return log
             else:
                 cols = []                           
                 while len(columns_names) != 0:                
@@ -189,55 +207,76 @@ class DataCatalog(object):
                          'columns':cols}
                                     
                 if os.path.isfile(tName):
-                    #TO DO: Return error
-                    print('error')
+                    log = 'Error 1: File not found'
+                    self.sendError(log)
+                    return log
                 else:
                     if self.evm != 0:
                         with open(str(self.metaPath) + '/' + str(tName), 'w') as sysCat:
                             json.dump(table,sysCat)
-        return
-            
+        else:
+            log = 'Error 22: Check for PK in columns'
+            self.sendError(log)
+        
+        return log
+    
+    ''' Drops table '''            
     def dropTable(self, table_name):
-        self.getEVM()
-        table = table_name + '.json'
-        self.openSysCat(table_name)
-        self.sysCat.close()               
+        self.openSysCat(table_name)               
         self.db["enabled"] = False
         
         if self.evm != 0:
             with open(table, 'w') as sysCat:
                 json.dump(self.db,sysCat)
         
-        return
+        log = 'Table ' + table_name +  ' dropped successfully.'
+        return log
     
-    def createIndex(self,  indexName, table_name, column):
-        self.getEVM()    
-        table = str(table_name) + '.json'                
-        self.openSysCat(table)
+    ''' Create Index '''
+    def createIndex(self, indexName, table_name, column):
+        self.getEVM()
+        table = table_name + '.json'                
+        self.openSysCat(table_name)
+        
         if self.db["index"] == False:
             self.db["index"] = [{"index":indexName}]
         else:
             self.db["index"].append({"index":indexName})
-        self.sysCat.close()
-        
-        with open(table, 'w') as sysCat:
+        print self.metaPath
+        with open(self.metaPath + '/' + table, 'w') as sysCat:
             json.dump(self.db,sysCat)
         
-        return
+        log = 'Index updated successfully.'
+        return log
     
+    ''' Set new FK '''
     def setFK(self, table_name, refTable, column):
         self.getEVM()
-        table = str(table_name) + '.json'
         self.openSysCat(table_name)
-        self.sysCat.close()
+        table = table_name + '.json'
+        log = 'Error 11: EVM not set up'
         
-        if self.db["FK"] == False:
-            self.db["FK"] = column
-        else:
-            print('Error, table has already a FK')
-            return
-        if self.evm != 0:
-            with open(table, 'w') as self.sysCat:
-                json.dump(self.db,self.sysCat)
-        
-        return
+        #TODO: Types are not validated since is out of requirements.
+        if column in self.getColNames(refTable):
+            if self.evm != 0:                
+                if self.db["FK"] == False:
+                    self.db["FK"] = [{'Table':refTable},{'Column':column}]
+                    print(self.db)
+                else:
+                    arr = self.db["FK"]
+                    arr.append({'Table':refTable},{'Column':column})
+                    self.db["FK"] = arr
+                
+                log = 'FK successfully updated'
+                print self.metaPath
+                            
+                with open(self.metaPath + '/' + table, 'w') as self.sysCat:
+                    json.dump(self.db,self.sysCat)
+            else:
+                self.sendError(log)
+            
+        return log
+    
+    def sendError(self, log):
+        errorModule = Logs()
+        errorModule.Error(log)

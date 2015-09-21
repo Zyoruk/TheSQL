@@ -3,10 +3,8 @@ from os.path import abspath, dirname, join, isdir
 import os.path
 from os import listdir
 import shutil
-<<<<<<< HEAD
-=======
 import json
->>>>>>> 68636a3833f75ad770cd2d1d592a0efcd41c1dad
+from Logs import Logs
 
 EVM_LIST = abspath(dirname('../evm/'))
 
@@ -18,6 +16,8 @@ class CLP():
         
     def listDatabases(self):
         dbs = [ f for f in listdir(EVM_LIST) if isdir(join(EVM_LIST,f)) ]
+        if dbs == []:
+            dbs = 'No DBs for you.'
         return dbs
         
     def createDatabase(self,db):
@@ -27,8 +27,12 @@ class CLP():
             os.makedirs(directory + '/metadata')
             os.makedirs(directory + '/info')
             os.makedirs(directory + '/index')
+            successC = 'Hard driver erased successfully...' + "/n" + 'Sorry, database: ' + db + ' created successfully' 
+            return successC
         else:
-            print("error: db exist already")
+            log = 'Error 3: A ' + db + ' db exist already'
+            self.sendError(log)
+            return log
         #self.data.setNewDB(directory)
     
     def dropDatabase(self, db):
@@ -37,6 +41,7 @@ class CLP():
         evm = {'db':0}
         with open(self.varfile , 'w') as TMP:
             json.dump(evm,TMP)
+        return 'Database: ' + db + ' dropped successfully' 
         
     def displayDatabase(self):
         datadb = {'db':0}
@@ -54,13 +59,19 @@ class CLP():
         if datadb['db'] != 0:            
             return datadb['db']
         else:
-            return 'No working database set'
+            log = 'No working database set'
+            self.sendError(log)            
+            return log
             
     def getStatus(self):
         status = []
         status.append(os.geteuid())
         status.append(self.displayDatabase())
         return status
+    
+    def sendError(self, log):
+        errorModule = Logs()
+        errorModule.Error(log)
         
     '''    
     def start(self, db):
