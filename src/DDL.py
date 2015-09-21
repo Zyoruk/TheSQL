@@ -3,22 +3,12 @@ from sdmanager import StoredDataManager
 from os.path import abspath, dirname
 import os.path
 import json
-<<<<<<< HEAD
-
-EVM_LIST = abspath(dirname('../evm/'))
-
-class DDL():
-    #TODO: Enable sdman
-    def __init__(self):
-=======
-
 
 EVM_LIST = abspath(dirname('../evm/'))
 
 class DDL(object):
     
     def __init__(self, sdman):
->>>>>>> caabc4ea5a5051d570502771f1de1909b45ebe7c
         self.dato = DataCatalog()
         #self.sdman = sdman
         self.varfile = EVM_LIST + '/' + 'VARIABLES.json'
