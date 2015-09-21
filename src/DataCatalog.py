@@ -264,7 +264,7 @@ class DataCatalog(object):
                     print(self.db)
                 else:
                     arr = self.db["FK"]
-                    arr.append({'Table':refTable,'Column':column})
+                    arr.append({'table':refTable,'column':column})
                     self.db["FK"] = arr
                 
                 log = 'FK successfully updated'
