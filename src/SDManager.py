@@ -131,7 +131,7 @@ class StoredDataManager(object):
                 if self.sysCat.getIndex(table, column) == -1: return -1
                 #Armar las que hacen falta    
                 for value in values:
-                    if value == None or value == NaN:
+                    if value == 'NULL' or isinstance(value, float) and isnan(value):
                         if self.sysCat.getNull(table, column):
                             # Hay que verificar que los tipos de datos sean correctos para columna.
                             valtype = self.sysCat.getType(table, column)
@@ -263,8 +263,8 @@ class StoredDataManager(object):
             res = []
             l =  SD.StoredData(5,'' + table +'.json').getAll()
             for item in l:
-                res.append(item[0][0])
-                return res
+                res.append(item[0])
+            return res
         return -1
     
     def remove(self,table,key):
@@ -281,7 +281,7 @@ class StoredDataManager(object):
     
     def erase(self,table):
         if self.exists(table):
-            sd = SD.StoredData(5, table)
+            sd = SD.StoredData(5,'' + table +'.json')
             sd.erase()
             sd.dump()            
         return -1
@@ -322,7 +322,7 @@ import DDL
 class TesterClass(object):
     def __init__(self):
         self.sdman = StoredDataManager()
-        #self.ddl = DDL.DDL(self.sdman)
+        self.ddl = DDL.DDL()
         self.syscat = DataCatalog()
         
     def test1(self):
@@ -357,8 +357,10 @@ class TesterClass(object):
         self.sdman.insert('test3', 3, ['Nom','Age'], ['D', 4])
         self.sdman.insert('test3', 4, ['Nom'], ['D'])
         self.sdman.insert('test3', 5, ['Age'],[0])
-        self.sdman.getAllasArray('test3')
+        print self.sdman.getAllasArray('test3')
 from math import isnan
 if __name__ == '__main__':
     t = TesterClass()
-    t.test5()
+    t.test1()
+    t.test2()
+    t.test3()

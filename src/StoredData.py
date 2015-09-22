@@ -20,7 +20,7 @@ Created on Sep 7, 2015
 '''
 
 
-from btree import BPlusTree as dataFormat
+from Btree import BPlusTree as dataFormat
 from os.path import abspath, dirname, join, isfile
 from json import JSONDecoder, JSONEncoder
 
