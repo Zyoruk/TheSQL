@@ -5,11 +5,11 @@ import json
 EVM_LIST = abspath(dirname('../evm/'))
 VARFILE = EVM_LIST + '/' + 'VARIABLES.json'
 
-class Logs():
+class Logs(object):
     
     def __init__(self):
-       self.varfile = EVM_LIST + '/' + 'CMD_Log.txt'
-       self.errorPath = 0
+        self.varfile = EVM_LIST + '/' + 'CMD_Log.txt'
+        self.errorPath = 0
        
     def getEVM(self):
         try:

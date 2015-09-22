@@ -17,7 +17,7 @@ Created on Sep 12, 2015
 
 @author: zyoruk
 '''
-import storedData as SD
+import StoredData as SD
 from DataCatalog import DataCatalog
 from struct import  pack, unpack
 
@@ -131,7 +131,7 @@ class StoredDataManager(object):
                 if self.sysCat.getIndex(table, column) == -1: return -1
                 #Armar las que hacen falta    
                 for value in values:
-                    if value == 'NULL':
+                    if value == 'NULL' or isinstance(value, float) and isnan(value):
                         if self.sysCat.getNull(table, column):
                             # Hay que verificar que los tipos de datos sean correctos para columna.
                             valtype = self.sysCat.getType(table, column)
@@ -263,8 +263,8 @@ class StoredDataManager(object):
             res = []
             l =  SD.StoredData(5,'' + table +'.json').getAll()
             for item in l:
-                res.append(item[0][0])
-                return res
+                res.append(item[0])
+            return res
         return -1
     
     def remove(self,table,key):
@@ -281,7 +281,7 @@ class StoredDataManager(object):
     
     def erase(self,table):
         if self.exists(table):
-            sd = SD.StoredData(5, table)
+            sd = SD.StoredData(5,'' + table +'.json')
             sd.erase()
             sd.dump()            
         return -1
@@ -319,13 +319,12 @@ class StoredDataManager(object):
         return False
     
 import DDL
-class TesterClass(object):
-    def __init__(self):
-        self.sdman = StoredDataManager()
-        self.ddl = DDL.DDL(self.sdman)
-        self.syscat = DataCatalog()
-        
+import unittest
+class TesterClass(unittest.TestCase):
     def test1(self):
+        self.sdman = StoredDataManager()
+        self.ddl = DDL.DDL()
+        self.syscat = DataCatalog()
         self.ddl.setDataBase('naDB')
         self.syscat.setNewTable('test1', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'],'ID')
         self.syscat.setNewTable('test2', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'],'ID')
@@ -335,29 +334,34 @@ class TesterClass(object):
         self.sdman.insert('test1', 3, ['Nom','Age'], ['D', 4])
         self.sdman.insert('test1', 4, 'Nom', 'D')
         print self.sdman.getAllasArray('test1')
+        
     def test2(self):
+        self.sdman = StoredDataManager()
+        self.ddl = DDL.DDL()
+        self.syscat = DataCatalog()
         self.sdman.update('test1', 0, ['Nom','Age'], ['Andres',54])
         print self.sdman.getAllasArray('test1')
     
     def test3(self):
+        self.sdman = StoredDataManager()
+        self.ddl = DDL.DDL()
+        self.syscat = DataCatalog()
         self.sdman.update('test1', 0, 'Nom', 'asas')
         self.sdman.update('test1', 0, 'Age', 100)
         print self.sdman.getAllasArray('test1')
         
     def test4(self):
-        strs = "LASB"
-        p = pack ('100s', strs)
-        y = unpack ('100s', p )
-        print y
-
-    def test5(self):
+        self.sdman = StoredDataManager()
+        self.ddl = DDL.DDL()
+        self.syscat = DataCatalog()
         self.syscat.setNewTable('test3', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NULL'],'ID')
         self.sdman.insert('test3', 1, ['Nom','Age'], ['B', 2])
         self.sdman.insert('test3', 2, ['Nom','Age'], ['C', 3])
         self.sdman.insert('test3', 3, ['Nom','Age'], ['D', 4])
         self.sdman.insert('test3', 4, ['Nom'], ['D'])
         self.sdman.insert('test3', 5, ['Age'],[0])
-        self.sdman.getAllasArray('test3')
+        print self.sdman.getAllasArray('test3')
+        
+from math import isnan
 if __name__ == '__main__':
-    t = TesterClass()
-    t.test5()
+    unittest.main()

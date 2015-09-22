@@ -1,9 +1,10 @@
 from DataCatalog import DataCatalog
-from sdmanager import StoredDataManager
+from SDManager import StoredDataManager
 from os.path import abspath, dirname
 from Logs import Logs
 import os.path
 import json
+
 
 EVM_LIST = abspath(dirname('../evm/'))
 

@@ -19,28 +19,29 @@ Created on Sep 13, 2015
 @author: zyoruk
 '''
 
-import sdmanager, os.path
-from DataCatalog import DataCatalog
+import SDManager as SDM
+import os.path
+import DataCatalog as DC
 class DML(object):
     '''
     classdocs
     '''
-    def __init__(self):
+    def __init__(self, sdman, syscat):
         '''
         Constructor
-        '''
-        self.sdm = sdmanager.StoredDataManager()
-        self.syscat = DataCatalog()
+        '''           
+        self.sdm = sdman
+        self.syscat = syscat
         
     def insertInto(self, table, columns, values):
-        if os.path.isfile(table):
+        if table in self.syscat.getTabNames():
             lKey = self.sdm.getAllKeys(table)
             for key in lKey:
-                return self.sdm.update(table, key, columns, values)
+                self.sdm.update(table, key, columns, values)
         return -1
     
     def deleteFrom(self, table, where = {}):
-        if os.path.isfile(table):   
+        if table in self.syscat.getTabNames():   
             if where == {}:
                 return self.sdm.erase(table)
             else:
@@ -52,7 +53,7 @@ class DML(object):
         return -1
     
     def update(self, table, columns, values, where = []):
-        #hay que Verificar que no se está tratando de hacer update a un PK de otra tabla
+        #hay que Verificar que no se esta tratando de hacer update a un PK de otra tabla
         if (self.syscat.getsPK(table) in columns) or (os.path.isfile(table) == False):
             return -1
                 
@@ -128,7 +129,7 @@ class DML(object):
         result =  []
         i = 1
         
-        #arreglar el formato de las listas para mejor manipulación
+        #arreglar el formato de las listas para mejor manipulacion
         return self.join_aux()
      
     #TODO
@@ -158,3 +159,24 @@ class DML(object):
             
     def FormatXML(self, resultSet):
         print 'a'
+        
+import unittest
+class Test(unittest.TestCase):
+    
+    def test1(self):
+        self.sdman = SDM.StoredDataManager()
+        self.syscat = DC.DataCatalog()
+        self.dml = DML(self.sdman, self.syscat)
+        self.dml.insertInto('test1', 'Nom', 'Luis')
+    
+    def test2(self):
+        self.sdman = SDM.StoredDataManager()
+        self.syscat = DC.DataCatalog()
+        self.dml = DML(self.sdman, self.syscat)
+        self.dml.deleteFrom('test1')
+    
+    def test3(self):
+        return 0
+        
+if __name__ == '__main__':
+    unittest.main()
