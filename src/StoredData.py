@@ -96,12 +96,10 @@ class StoredData(dataFormat):
             return -1
 
 from struct import pack, unpack      
-class TestSDClass(object):
+import unittest
+class Test(unittest.TestCase):
 
-    def __init__(self):
-        self.sd = None
-        
-    def create(self):
+    def test_create(self):
         self.sd = StoredData(20, 'test.json')
         
     def clear(self):
@@ -116,13 +114,15 @@ class TestSDClass(object):
     def showAll(self):
         print self.sd.getAll()
       
-    def insertBinary(self):        
+    def test_insertBinary(self):  
+        self.sd = StoredData(20, 'test.json')      
         self.sd.insert(0, pack('3sii','Rey', 5,10))
         self.sd.insert(1, pack('3sii','Rey', 5,10))
         self.sd.insert(2, pack('3sii','Rey', 5,10))
         self.sd.dump()
         
-    def readall(self):
+    def test_readall(self):
+        self.sd = StoredData(20, 'test.json')
         result = []
         for item in  self.sd.getAll():
             t = []
@@ -134,15 +134,4 @@ class TestSDClass(object):
         print result
     
 if __name__ == '__main__':
-    print 'Performing test for Stored Data ...'
-    
-    fh = open ('test.json', 'w+')
-    fh.write('{}')
-    fh.close()
-    test = TestSDClass()
-    test.create()
-    test.insertBinary()
-    test.showAll()
-    test.readall()
-    test.clear()
-    test.showAll()
+    unittest.main()

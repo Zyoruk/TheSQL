@@ -17,7 +17,7 @@ Created on Sep 12, 2015
 
 @author: zyoruk
 '''
-import storedData as SD
+import StoredData as SD
 from DataCatalog import DataCatalog
 from struct import  pack, unpack
 
@@ -319,13 +319,12 @@ class StoredDataManager(object):
         return False
     
 import DDL
-class TesterClass(object):
-    def __init__(self):
+import unittest
+class TesterClass(unittest.TestCase):
+    def test1(self):
         self.sdman = StoredDataManager()
         self.ddl = DDL.DDL()
         self.syscat = DataCatalog()
-        
-    def test1(self):
         self.ddl.setDataBase('naDB')
         self.syscat.setNewTable('test1', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'],'ID')
         self.syscat.setNewTable('test2', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'],'ID')
@@ -335,22 +334,26 @@ class TesterClass(object):
         self.sdman.insert('test1', 3, ['Nom','Age'], ['D', 4])
         self.sdman.insert('test1', 4, 'Nom', 'D')
         print self.sdman.getAllasArray('test1')
+        
     def test2(self):
+        self.sdman = StoredDataManager()
+        self.ddl = DDL.DDL()
+        self.syscat = DataCatalog()
         self.sdman.update('test1', 0, ['Nom','Age'], ['Andres',54])
         print self.sdman.getAllasArray('test1')
     
     def test3(self):
+        self.sdman = StoredDataManager()
+        self.ddl = DDL.DDL()
+        self.syscat = DataCatalog()
         self.sdman.update('test1', 0, 'Nom', 'asas')
         self.sdman.update('test1', 0, 'Age', 100)
         print self.sdman.getAllasArray('test1')
         
     def test4(self):
-        strs = "LASB"
-        p = pack ('100s', strs)
-        y = unpack ('100s', p )
-        print y
-
-    def test5(self):
+        self.sdman = StoredDataManager()
+        self.ddl = DDL.DDL()
+        self.syscat = DataCatalog()
         self.syscat.setNewTable('test3', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NULL'],'ID')
         self.sdman.insert('test3', 1, ['Nom','Age'], ['B', 2])
         self.sdman.insert('test3', 2, ['Nom','Age'], ['C', 3])
@@ -358,9 +361,7 @@ class TesterClass(object):
         self.sdman.insert('test3', 4, ['Nom'], ['D'])
         self.sdman.insert('test3', 5, ['Age'],[0])
         print self.sdman.getAllasArray('test3')
+        
 from math import isnan
 if __name__ == '__main__':
-    t = TesterClass()
-    t.test1()
-    t.test2()
-    t.test3()
+    unittest.main()

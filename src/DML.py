@@ -19,7 +19,7 @@ Created on Sep 13, 2015
 @author: zyoruk
 '''
 
-import sdmanager as SDM
+import SDManager as SDM
 import os.path
 import DataCatalog as DC
 class DML(object):
@@ -160,21 +160,23 @@ class DML(object):
     def FormatXML(self, resultSet):
         print 'a'
         
-class DMLTest(object):
-    def __init__(self):
+import unittest
+class Test(unittest.TestCase):
+    
+    def test1(self):
         self.sdman = SDM.StoredDataManager()
         self.syscat = DC.DataCatalog()
         self.dml = DML(self.sdman, self.syscat)
-    
-    def test1(self):
         self.dml.insertInto('test1', 'Nom', 'Luis')
     
     def test2(self):
+        self.sdman = SDM.StoredDataManager()
+        self.syscat = DC.DataCatalog()
+        self.dml = DML(self.sdman, self.syscat)
         self.dml.deleteFrom('test1')
     
     def test3(self):
         return 0
         
 if __name__ == '__main__':
-    dmlt = DMLTest()
-    dmlt.test2()
+    unittest.main()
