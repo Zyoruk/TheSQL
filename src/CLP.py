@@ -15,7 +15,7 @@ class CLP():
         self.varfile = EVM_LIST + '/' + 'VARIABLES.json'
         
     def start(self, db):
-        self.var = db
+        
         
     def stop(self): 
         self.var = 0

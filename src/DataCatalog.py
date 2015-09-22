@@ -242,9 +242,9 @@ class DataCatalog(object):
         self.openSysCat(table_name)
         
         if self.db["index"] == False:
-            self.db["index"] = [{"index":indexName}]
+            self.db["index"] = [{"name":indexName}]
         else:
-            self.db["index"].append({"index":indexName})
+            self.db["index"].append({"name":indexName})
         print self.metaPath
         with open(self.metaPath + '/' + table, 'w') as sysCat:
             json.dump(self.db,sysCat)
