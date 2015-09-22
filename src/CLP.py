@@ -14,6 +14,12 @@ class CLP():
         self.data = DataCatalog()
         self.varfile = EVM_LIST + '/' + 'VARIABLES.json'
         
+    def start(self, db):
+        self.var = db
+        
+    def stop(self): 
+        self.var = 0
+        
     def listDatabases(self):
         dbs = [ f for f in listdir(EVM_LIST) if isdir(join(EVM_LIST,f)) ]
         if dbs == []:
@@ -71,14 +77,6 @@ class CLP():
     
     def sendError(self, log):
         errorModule = Logs()
-        errorModule.Error(log)
-        
-    '''    
-    def start(self, db):
-        self.var = db
-        
-    def stop(self): 
-        self.var = 0
-    '''    
+        errorModule.Error(log)    
         
         

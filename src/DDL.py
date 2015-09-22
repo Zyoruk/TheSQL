@@ -5,7 +5,6 @@ from Logs import Logs
 import os.path
 import json
 
-
 EVM_LIST = abspath(dirname('../evm/'))
 
 class DDL(object):
