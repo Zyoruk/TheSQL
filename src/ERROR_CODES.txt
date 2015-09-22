@@ -2,6 +2,7 @@
 1 = File not found
 2 = No working database space set
 3 = DB/Table exist already
+4 = Metadata Error
 
 #11 - 20: User related
 11 = Environment not set

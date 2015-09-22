@@ -187,6 +187,7 @@ class DataCatalog(object):
         self.getEVM()
         tName = table_name + '.json'
         log = 'Table created successfully.'
+        state = False
         
         if PK in columns_names:
                                         
@@ -203,7 +204,6 @@ class DataCatalog(object):
                 table = {'PK':PK,
                          'FK':False, 
                          'index':False,
-                         'enabled':True,
                          'columns':cols}
                                     
                 if os.path.isfile(tName):
@@ -214,12 +214,15 @@ class DataCatalog(object):
                     if self.evm != 0:
                         with open(str(self.metaPath) + '/' + str(tName), 'w') as sysCat:
                             json.dump(table,sysCat)
+                        state = True
+                
         else:
             log = 'Error 22: Check for PK in columns'
             self.sendError(log)
         
-        return log
+        return state
     
+    """
     ''' Drops table '''            
     def dropTable(self, table_name):
         self.openSysCat(table_name)               
@@ -231,6 +234,7 @@ class DataCatalog(object):
         
         log = 'Table ' + table_name +  ' dropped successfully.'
         return log
+    """
     
     ''' Create Index '''
     def createIndex(self, indexName, table_name, column):
