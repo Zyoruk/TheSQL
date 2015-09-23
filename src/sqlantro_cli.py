@@ -20,26 +20,48 @@ This file is part of SQLantro.
 # website: jsnchzjmnz.wordpress.com
 
 from sqlantro_processor import * 
+import textwrap
+from textos import *
 
-print "";
-print "Bienvenido seas";
-print "This is SQLantro shell version 0.1";
-print "Licenced Under GPLv2";
-print "Writted by Julio S.";
-print "";
-print "Have fun!";
-print "";
 
-flag=1;
-input="";
 
-while flag:
-	input=raw_input('>');
-	if input=="exit":
-		flag=0;
-	elif input=="help":
-		print "toma tu ayuda";
-	elif input=="license":
-		print "toma tu licencia";
-	elif len(input) != 0:
-		print execute(input);
+class cli:
+	
+	def __init__(self):
+		self.history=[];
+		self.flag=1;
+		self.entrada="";
+		self.i=interprete();
+	
+	def bienve(self):
+		print "";
+		print "Bienvenido seas";
+		print "This is SQLantro shell version 0.1 for TheSQL DBMS";
+		print "Licenced Under GPLv2";
+		print "";
+		print "Have fun!";
+		print "";
+
+	def print_history(self):
+		contador=0;
+		if len(self.history)>0:
+			print self.history[contador];
+			contador=contador+1;
+
+
+	def hilo(self):
+		while self.flag:
+			self.entrada=raw_input('>');
+			self.history.append(self.entrada);
+			if self.entrada=="exit":
+				self.flag=0;
+			elif self.entrada=="help":
+				print "toma tu ayuda";
+			elif self.entrada=="license":
+				print textwrap.fill(license);
+			elif len(self.entrada) != 0:
+				print self.i.execute(self.entrada);
+		
+command_line_interface=cli()
+command_line_interface.bienve()
+command_line_interface.hilo()		
