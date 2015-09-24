@@ -68,16 +68,187 @@ class DML(object):
                 
         return 0
         
-    def whereRipper(self, table, where = []):
-        if self.syscat.getType(table, where[0]) == self.syscat.getType(table, where[2]):
-            index = self.syscat.getIndex(table, where[0])
-            rows = self.sdm.getAll(table)
-            resultset = []
-            for row in rows:
-                if self.compare(where[1], row[1][index], where[2]):
-                    resultset.append(row)
-            return resultset
-        return -1
+    #TODO
+    def join(self,tables):
+        result = []
+        temp = []
+        colsnames = []
+        if isinstance(tables, list):
+            for t in tables :
+                if not (t in self.syscat.getTabNames()): return -1
+                names = list(self.syscat.getColNames(t))
+                names.reverse()
+                for name in names:
+                    colsnames.append('' + t + '.' + name)
+                if result == []:
+                    result = self.sdm.getAllasArray(t)
+                else:
+                    temp = result
+                    result = [] 
+                    for reg1 in temp:
+                        for reg2 in self.sdm.getAllasArray(t):
+                            if self.compare('=', reg1[0], reg2[0]):
+                                result.append(reg1 + reg2)
+            result = [colsnames] + result
+        else:
+            colsnames = list(self.syscat.getColNames(tables))
+            colsnames.reverse()
+            result = [colsnames] + self.sdm.getAllasArray(tables)            
+        return result
+            
+    def whereRipper(self, listset , where = []):
+        if where== []:
+            return listset
+        
+        #if self.checkCond(where) == -1 : return -1
+        
+        names = list(listset[0])
+        regs = list(listset[1:])
+    
+        if len(where) == 1 :
+            return self.singleCond(names, regs, where[0])
+        else:
+            result =[]
+            for reg in regs:
+                strg = ''
+                for cond in where:
+                    if len(strg) != 0: strg += ' '
+                    if cond == 'AND' or cond == 'OR':
+                        strg += str(cond).lower()
+                    else:
+                        if len(cond) == 2:
+                            if cond[0] in names:                     
+                                strg +=  str(self.compare(cond[1], reg[list(names).index(cond[0])]))
+                            else:
+                                strg += str(self.compare(cond[1], cond[0]))
+                        else:
+                            if cond[0] in names and cond[2] in names:
+                                strg += str(self.compare(cond[1], reg[list(names).index(cond[0])], reg[list(names).index(cond[2])]))
+                                    
+                            elif cond[0] in names:
+                                strg += str(self.compare(cond[1], reg[list(names).index(cond[0])], cond[2]))
+                            elif cond[2] in names:
+                                strg += str(self.compare(cond[1], cond[0], reg[list(names).index(cond[2])]))
+                            else:
+                                strg += str(self.compare(cond[1], cond[0], cond[2]))
+                if eval (strg) == True:
+                    result.append(reg)
+            return result
+                    
+    def singleCond(self, names, regs, cond):
+        result = []
+
+        if len(cond) == 2:
+            for reg in regs:
+                if cond[0] in names:                     
+                    if (self.compare(cond[1], reg[list(names).index(cond[0])])):
+                        result.append(reg)
+                else:
+                    if (self.compare(cond[1], cond[0])):
+                        result.append(reg)
+        else:
+            for reg in regs: 
+                if cond[0] in names and cond[2] in names:
+                    if (self.compare(cond[1], reg[list(names).index(cond[0])], reg[list(names).index(cond[2])])):
+                        result.append(reg)
+                elif cond[0] in names:
+                    if (self.compare(cond[1], reg[list(names).index(cond[0])], cond[2])):
+                        result.append(reg)
+                elif cond[2] in names:
+                    if (self.compare(cond[1], cond[0], reg[list(names).index(cond[2])])):
+                        result.append(reg)
+                else:
+                    if self.compare(cond[1], cond[0], cond[2]):
+                        result.append(reg)
+        return result
+                 
+    def isDateTime(self, val):
+        return True
+    
+    def checkCond(self, tables, conds):
+        for cond in conds:
+            type1 = None
+            type2 = None
+            if len(cond) == 1:
+                continue
+            if len(cond) == 2:
+                if cond [1] != 'IS NOT NULL' or cond[1] != 'IS NULL': return False
+                else:
+                    val1 = cond[0]
+                    if isinstance(val1, str):
+                        if '.' in val1:
+                            if val1.split('.')[0] in tables:
+                                for t in tables : 
+                                    if t == val1.split('.')[0]:
+                                        if val1.split('.')[1] in self.syscat.getColNames(t):
+                                            continue
+                                        else:
+                                            return False
+            if len(cond) == 3 :                
+                val1 = cond[0]
+                val2 = cond[2]
+                
+                if isinstance(val1, str) and isinstance(val2, int) or isinstance(val1, int) and isinstance(val2, str):
+                    return False
+                elif isinstance(val1, int) and isinstance(val2, int):
+                    continue
+                elif isinstance(val1, str) and isinstance(val2, str):
+                    if '.' in val1 and '.' in val2: 
+                        if val1.split('.')[0] in tables and val2.split('.')[0] in tables:                        
+                            type1 = self.syscat.getType(val1.split('.')[0], val1.split('.')[1])
+                            type2 = self.syscat.getType(val2.split('.')[0], val2.split('.')[1])
+                        elif  val1.split('.')[0] in self.syscat.getColNames(tables):
+                            type1 = self.syscat.getType(val1.split('.')[0], val1.split('.')[1])
+                            if self.isDateTime(val2):
+                                type2 = 'DATETIME'
+                            else: 
+                                type2 = 'VARCHAR'
+                        elif val2.split('.')[0] in self.syscat.getColNames(tables):
+                            type2 = self.syscat.getType(val2.split('.')[0], val2.split('.')[1])
+                            if self.isDateTime(val1):
+                                type1 = 'DATETIME'
+                            else: 
+                                type1 = 'VARCHAR'
+                    elif '.' in val1:
+                        if val1.split('.')[0] in self.syscat.getColNames(tables):
+                            type1 = self.syscat.getType(val1.split('.')[0], val1.split('.')[1])
+                            if self.isDateTime(val2):
+                                type2 = 'DATETIME'
+                            else: 
+                                type2 = 'VARCHAR'
+                    elif '.' in val2:
+                        if val2.split('.')[0] in tables and val2.split('.')[1] in self.syscat.getColNames(tables):
+                            type2 = self.syscat.getType(val2.split('.')[0], val2.split('.')[1])
+                            if self.isDateTime(val1):
+                                type1 = 'DATETIME'
+                            else: 
+                                type1 = 'VARCHAR'
+                    else:
+                        if val1 in self.syscat.getColNames(tables) and val2 in self.syscat.getColNames(tables):
+                            type1 = self.syscat.getType(tables, val1)
+                            type2 = self.syscat.getType(tables, val2)
+                        elif val1 in self.syscat.getColNames(tables):
+                            type1 = self.syscat.getType(tables, val1)
+                            if isinstance(val2, str):
+                                if self.isDateTime(val2):
+                                    type2 = 'DATETIME'
+                                else:
+                                    type2 = 'VARCHAR'
+                            elif isinstance(val2 , int):
+                                type2 = 'INTEGER'
+                        elif val2 in self.syscat.getColNames(tables):
+                            type2 = self.syscat.getType(tables, val2)
+                            if isinstance(val1, str):
+                                if self.isDateTime(val1):
+                                    type1 = 'DATETIME'
+                                else:
+                                    type1 = 'VARCHAR'
+                            elif isinstance(val1 , int):
+                                type1 = 'INTEGER'
+            if self.valid(type1, type2):
+                continue
+            else: 
+                return False
             
     def compare (self, operator, tableVal, compVar = None):
         if operator == '=':
@@ -123,39 +294,14 @@ class DML(object):
         for table in tables:
             if os.path.isfile(table) == False: 
                 return False 
-   
-    #TODO
-    def join(self,tables):
-        result =  []
-        i = 1
-        
-        #arreglar el formato de las listas para mejor manipulacion
-        return self.join_aux()
      
     #TODO
-    def Select(self, tables, columns = [], form = '0', where = [], on=[]):
-        #si son varias tablas.
-        if isinstance(tables, list):
-            workWith= self.join(tables, on)
-        if self.exists(tables):
-            if columns == []:
-                if form != '0':
-                    return self.FormatXML(self.sdm.getAll(tables))
-                return self.sdm.getAll(tables)
-            else:
-                #Verificar que existan las columnas en la tabla.
-                indexes = []
-                for column in columns:
-                    #indexes.append(syscat.getindex(column))
-                    indexes.append(NaN)
-                ResultSet ={}
-                tempResultSet = self.sdm.getAll(tables)
-                for item in tempResultSet:
-                    t = []
-                    for index in indexes:
-                        ResultSet[item[0]] = (item[0], item[1][index])
-                        t.append            
-                return 1
+    def Select(self, tables = [], columns = [], form = '0', where = [], on=[]):
+        #1 Perform from
+        result_set = self.join(tables) 
+        
+        print 
+        
             
     def FormatXML(self, resultSet):
         print 'a'
@@ -163,20 +309,35 @@ class DML(object):
 import unittest
 class Test(unittest.TestCase):
     
-    def test1(self):
+    def nottest1(self):
         self.sdman = SDM.StoredDataManager()
         self.syscat = DC.DataCatalog()
         self.dml = DML(self.sdman, self.syscat)
         self.dml.insertInto('test1', 'Nom', 'Luis')
     
-    def test2(self):
+    def nottest2(self):
         self.sdman = SDM.StoredDataManager()
         self.syscat = DC.DataCatalog()
         self.dml = DML(self.sdman, self.syscat)
         self.dml.deleteFrom('test1')
     
     def test3(self):
-        return 0
+        self.sdman = SDM.StoredDataManager()
+        self.syscat = DC.DataCatalog()
+        self.dml = DML(self.sdman, self.syscat)
+        listset = self.dml.join(['test1','test3'])
+        print self.dml.whereRipper(listset, [['test1.Age', '=', 3]])
+        print self.dml.whereRipper(listset, [['test1.ID', '>', 1], 'OR', ['test3.Age', '>', 0]])
+        print self.dml.whereRipper(listset, [['test1.ID', '>', 5], 'AND', ['test3.Age', '>', 0], 'OR', ['test3.Age', '>', 5]])
+    
+    def ntest4(self):
+        self.sdman = SDM.StoredDataManager()
+        self.syscat = DC.DataCatalog()
+        self.dml = DML(self.sdman, self.syscat)
+        listset = self.dml.join('test1')
+        print listset
+        print self.dml.whereRipper(listset, [[5, '=', 5]])
         
 if __name__ == '__main__':
     unittest.main()
+    
