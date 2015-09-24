@@ -5,73 +5,74 @@ from Logs import Logs
 import os.path
 import json
 
-
 EVM_LIST = abspath(dirname('../evm/'))
 
 class DDL(object):
     
-    def __init__(self):
+    def __init__(self,sdman):
+    #def __init__(self):
         self.dato = DataCatalog()
-        #self.sdman = sdman
+        self.sdman = sdman
         self.varfile = EVM_LIST + '/' + 'VARIABLES.json'
         self.evm = 0
         self.metaPath = 0
         self.infoPath = 0
-        self.indexPath = 0
+        self.log = 'Error 11: EVM not set up.'
         
-    def setDataBase(self,db):
+    def setDataBase(self, db):
         if os.path.isdir(EVM_LIST + '/' + db):
-            self.evm = {'db':db}
+            evm = {'db':db}
+            self.evm = str(db)
             self.metaPath = EVM_LIST + '/' + str(db) + '/metadata/'
             self.infoPath = EVM_LIST + '/' + str(db) + '/info/'
-            self.infoPath = EVM_LIST + '/' + str(db) + '/index/'
+            #self.indexPath = EVM_LIST + '/' + str(db) + '/index/'
             with open(self.varfile , 'w') as TMP:
-                json.dump(self.evm,TMP)
-            return 'DB ' + db + ' set.'
+                json.dump(evm,TMP)
+            return 'Environment ' + str(db) + ' set.'
         else:
             log = 'Error 1: No existing DB'
             self.sendError(log)
             return log
             
-            
-    def createTable(self,table_name, columns_names, column_type, column_nullability, PK):
+    def createTable(self, table_name, columns_names, column_type, column_nullability, PK):
+        self.getEVM()
+        
         if self.evm != 0:
-            with open(self.varfile, 'r') as TMP:
-                FF = json.load(TMP)
-            cat = FF["db"]
-            TMP.close()
-            if cat != 0:
-                self.dato.setNewTable(table_name, columns_names, column_type, column_nullability, PK)
+            state = self.dato.setNewTable(table_name, columns_names, column_type, column_nullability, PK)
+            if state:
                 with open(str(self.infoPath) + '/' + str(table_name) + '.json', 'w') as TMP2:
-                    json.dump({},TMP2)
+                    json.dump({},TMP2)   
+                log = 'Table ' + str(table_name) + ' created successfully.'
+            else:
+                log = 'Error 4: Could not write metadata.'
+                self.sendError(log)
         else:
-            print('Error: EVM not set up.')
+            self.sendError(self.log)
+        
+        return log
     
     def dropTable(self, table_name):
         if self.evm != 0:
-            #with open(str(self.varfile), 'r') as TMP:
-                #FF = json.load(TMP)
-            #cat = FF["db"]
-            #TMP.close()
-            #if cat != 0:
             info = self.infoPath + '/' + str(table_name) + '.json'
             meta = self.metaPath + '/' + str(table_name) + '.json'
-            index = self.indexPath + '/' + str(table_name) + '_index.json'
+            
+            #Se eliminan archivos para mantener la posibilidad de la creación de nuevas tablas.
             if os.path.exists(info):
                 os.remove(info)
                 os.remove(meta)
-                os.remove(index)
             else:
-                print("Error: No such table in this environment.")
-            
+                log = "Error 1: No such table in this environment."            
         else:
-            print('Error: EVM not set up.')
+            return log
             
     def createIndex(self, indexName, table_name, column):
+        
+        log = 'Error 11: EVM not set up.'
         if self.evm != 0:
-            #CREATE INDEX <index-name> ON <table-name>(<column-name>)
+            
             keys = self.sdman.getAllKeys()
             vals = self.sdman.getAllValues(table_name, column)
+            
             if len(keys) != len(vals):
                 print("Error, len mismatch")
                 return
@@ -86,14 +87,22 @@ class DDL(object):
             
             self.dato.createIndex(indexName, table_name, column)
         else:
-            print('Error: EVM not set up.')
+            self.sendError(log)
+            
+        return log
                 
     def alterTable(self, table_name, refTable, column):
         if self.evm != 0:
             self.dato.setFK(table_name, refTable, column)
         else:
-            print('Error: EVM not set up.')
+            self.sendError('Error 1: EVM not set up.')
             
     def sendError(self, log):
         errorModule = Logs()
         errorModule.Error(log)
+        
+    def getEVM(self):
+        with open(self.varfile, 'r') as TMP:
+            FF = json.load(TMP)
+        self.evm = FF["db"]
+        TMP.close()

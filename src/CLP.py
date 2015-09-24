@@ -5,6 +5,7 @@ from os import listdir
 import shutil
 import json
 from Logs import Logs
+from GetEVM import GetEVM
 
 EVM_LIST = abspath(dirname('../evm/'))
 
@@ -13,6 +14,33 @@ class CLP():
     def __init__(self):
         self.data = DataCatalog()
         self.varfile = EVM_LIST + '/' + 'VARIABLES.json'
+        
+    def start(self):
+        evm = GetEVM()
+        log = 0
+        directory = evm.getEVM()
+        directory = EVM_LIST + '/' + str(directory) 
+        
+        if os.path.exists(directory) and os.path.exists(directory + '/metadata'):
+            os.makedirs(directory + '/metadata')
+            os.makedirs(directory + '/info')
+            directory = directory + '/ERRORS.txt'
+            f = open(directory,'w')
+            f.write(directory)
+            f.close()            
+            log = 'Hard driver erased successfully...\n' + 'Starting database: ' + directory + ' successful'
+        else:
+            log = 'Error 3: The ' + directory + ' does not exist...\nCalling the JLA for help.'
+            self.sendError(log)
+        
+        return log
+        
+        
+    def stop(self): 
+        evm = {'db':0}
+        with open(self.varfile , 'w') as TMP:
+            json.dump(evm,TMP)
+        return 'Dont drink and root. Working on /.'
         
     def listDatabases(self):
         dbs = [ f for f in listdir(EVM_LIST) if isdir(join(EVM_LIST,f)) ]
@@ -26,7 +54,6 @@ class CLP():
             os.makedirs(directory)
             os.makedirs(directory + '/metadata')
             os.makedirs(directory + '/info')
-            os.makedirs(directory + '/index')
             successC = 'Hard driver erased successfully...' + "/n" + 'Sorry, database: ' + db + ' created successfully' 
             return successC
         else:
@@ -71,14 +98,6 @@ class CLP():
     
     def sendError(self, log):
         errorModule = Logs()
-        errorModule.Error(log)
-        
-    '''    
-    def start(self, db):
-        self.var = db
-        
-    def stop(self): 
-        self.var = 0
-    '''    
+        errorModule.Error(log)    
         
         
