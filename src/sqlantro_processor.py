@@ -27,7 +27,8 @@ class interprete:
 	
 	def __init__(self):
 		self.logs=[];
-	
+		self.cpl=cpl_manager();
+		
 	def execute(self,parameters):
 		
 		e , words=syntax_analyzer(parameters)
@@ -43,24 +44,24 @@ class interprete:
 	def query_(self,e,words):
 		answer="";
 		if e==1:
-			answer=create_database(words[2]);
+			answer=self.cpl.create_database(words[2]);
 			self.logs.append(answer);
 		elif e==2:
-			answer=start();
+			answer=self.cpl.start();
 		elif e==3:
-			answer=stop();
+			answer=self.cpl.stop();
 		elif e==4:
-			answer=drop_database(words[2]);
+			answer=self.cpl.drop_database(words[2]);
 		elif e==5:
-			answer=set_database(words[2]);
+			answer=self.cpl.set_database(words[2]);
 		elif e==6:
-			answer=display_database(words[2]);
+			answer=self.cpl.display_database(words[2]);
 		elif e==7:
-			answer=drop_table(words[2]);
+			answer=self.cpl.drop_table(words[2]);
 		elif e==8:
-			answer=list_databases();
+			answer=self.cpl.list_databases();
 		elif e==9:
-			answer=get_status();
+			answer=self.cpl.get_status();
 		elif e==10:
 			#set_database();
 			answer= "set database";

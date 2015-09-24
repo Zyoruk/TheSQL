@@ -485,7 +485,6 @@ def select_analyzer(parameters):
 			aux=[];
 			if where_pos>-1:
 				counter=where_pos+1;
-				print "#";
 				while banderisha and counter<menor:
 					print parameters[counter];
 					aux.append(parameters[counter]);
@@ -652,7 +651,6 @@ def set_analyzer(expression):
 		else:
 			result=False;
 	
-	print result;
 	return result;
 
 

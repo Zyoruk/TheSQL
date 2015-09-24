@@ -19,32 +19,31 @@ This file is part of SQLantro.
 # email: jsnchzjmnz@gmail.com
 # website: jsnchzjmnz.wordpress.com
 
-	
-def create_database(dbname):
-	return "aqui es donde creamos la base de datos "+dbname;
+from CLP import *
 
-def drop_database(dbname):
-	return "aqui es donde eliminamos la base de datos "+dbname;
-	
-def set_database(schemaname):
-	return "aqui es donde asignamos la base de datos "+schemaname;
+class cpl_manager:
+	def __init__(self):
+		self.logs=[];
+		self.theclp=CLP();
 
-def drop_table(tablename):
-	return "aqui es donde eliminamos la tabla "+tablename;
+	def create_database(self,dbname):
+		return self.theclp.createDatabase(dbname);
 
+	def drop_database(self,dbname):
+		return self.theclp.dropDatabase(dbname);
+		
+	def list_databases(self):
+		return self.theclp.listDatabases();
 
-def list_databases():
-	return "aqui se listan las bases de datos";
+	def get_status(self):
+		return self.theclp.getStatus();
 
-def get_status():
-	return "aqui se obtiene el status";
-
-def stop():
-	return "aqui se detienen los procesos";
-	
-def start():
-	return "aqui se inician los procesos";
-	
-def display_database(dbname):
-	return "aqui se muestra la info de la base "+dbname;
+	def stop(self):
+		return self.theclp.stop();
+		
+	def start(self):
+		return self.theclp.start();
+		
+	def display_database(self,dbname):
+		return self.theclp.displayDatabase();
 	
