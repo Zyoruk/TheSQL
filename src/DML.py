@@ -163,7 +163,18 @@ class DML(object):
         return result
                  
     def isDateTime(self, val):
-        return True
+        if len(val) == 10s:
+			nums = str(val).split('/')
+			if len(a) == 3:
+				if len(nums[0]) == 2 and len(nums[0]) == len(nums[1]) and len(nums[2]) == 4:
+					for num in nums:
+						if num.isnumeric():
+							continue
+						else:
+							return False
+					return True
+		return False
+					
     
     def checkCond(self, tables, conds):
         for cond in conds:
@@ -255,6 +266,11 @@ class DML(object):
             return False
         elif (type2 == 'DATETIME' and ('CHAR' in type1 )) or (type1 == 'DATETIME' and ('CHAR' in type2 )):
             return False
+        elif (type1 == 'INTEGER' and type2 != 'INTEGER') or (type2 == 'INTEGER' and type1 != 'INTEGER'):
+			return False
+		else:
+			return True
+			
     def compare (self, operator, tableVal, compVar = None):
         if operator == '=':
             return tableVal == compVar

@@ -33,11 +33,21 @@ class StoredDataManager(object):
         '''
         Constructor
         '''
-        self.sysCat = DataCatalog()
+        self.sysCat = None
+        self.dbname = None
+        self.env = None
+
+	def loadData(self, sysCat):
+		self.sysCat = sysCat
         fh = open ('' + EVM_LIST + '/VARIABLES.json', 'r' )
         self.dbname = JSONDecoder().decode(fh.readline())['db']
         self.env = '' + EVM_LIST +'/' + self.dbname + '/info/'
-
+        
+	def destruct(self):
+		self.sysCat = None
+        self.dbname = None
+        self.env = None
+        
     def search(self, table, key):
         if (self.exists(table)):
             return SD.StoredData(5 , '' + self.env + table +'.json').search(key)
@@ -327,9 +337,10 @@ import DDL
 import unittest
 class TesterClass(unittest.TestCase):
     def test1(self):
+		self.syscat = DataCatalog()
         self.sdman = StoredDataManager()
+        self.sdman.loadData(self.syscat)
         self.ddl = DDL.DDL()
-        self.syscat = DataCatalog()
         self.ddl.setDataBase('naDB')
         self.syscat.setNewTable('test1', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'],'ID')
         self.sdman.insert('test1', 0, ['Nom','Age'], ['A', 1])
