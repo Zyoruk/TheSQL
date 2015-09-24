@@ -249,7 +249,12 @@ class DML(object):
                 continue
             else: 
                 return False
-            
+    
+    def valid(self, type1, type2):
+        if type1 == 0 or type2 == 0:
+            return False
+        elif (type2 == 'DATETIME' and ('CHAR' in type1 )) or (type1 == 'DATETIME' and ('CHAR' in type2 )):
+            return False
     def compare (self, operator, tableVal, compVar = None):
         if operator == '=':
             return tableVal == compVar
