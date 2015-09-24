@@ -56,7 +56,7 @@ class DDL(object):
             info = self.infoPath + '/' + str(table_name) + '.json'
             meta = self.metaPath + '/' + str(table_name) + '.json'
             
-            #Se eliminan archivos para mantener la posibilidad de la creación de nuevas tablas.
+            #Se eliminan archivos para mantener la posibilidad de la creacion de nuevas tablas.
             if os.path.exists(info):
                 os.remove(info)
                 os.remove(meta)

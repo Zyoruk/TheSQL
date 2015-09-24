@@ -2,8 +2,8 @@ from DataCatalog import DataCatalog
 
 class XQTerPlan(object):
     
-    def __init__(self):
-        self.data = DataCatalog()
+    def __init__(self, DC):
+        self.data = DC
     
     def thePlan(self,table):
         plan = 0

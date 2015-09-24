@@ -264,15 +264,13 @@ class DataCatalog(object):
         if column in self.getColNames(refTable):
             if self.evm != 0:                
                 if self.db["FK"] == False:
-                    self.db["FK"] = [{'Table':refTable,'Column':column}]
-                    print(self.db)
+                    self.db["FK"] = [{'table':refTable,'column':column}]
                 else:
                     arr = self.db["FK"]
                     arr.append({'table':refTable,'column':column})
                     self.db["FK"] = arr
                 
                 log = 'FK successfully updated'
-                print self.metaPath
                             
                 with open(self.metaPath + '/' + table, 'w') as self.sysCat:
                     json.dump(self.db,self.sysCat)

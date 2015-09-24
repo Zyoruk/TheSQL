@@ -2,6 +2,7 @@ from DataCatalog import DataCatalog
 from CLP import CLP
 from DDL import DDL
 from Logs import Logs
+from SDManager import StoredDataManager
 
 class DCTestClass(object):
     
@@ -41,7 +42,7 @@ class DCTestClass(object):
         self.test1()
         print(self.data.getNulls('mugre'))
         print(self.data.getNull('mugre','maria'))
-        print(self.data.setFK('mugre', 'moo', 'demonios' ))
+        self.data.setFK('mugre', 'moo', 'demonios' )
         print(self.data.getFK('mugre'))
         
     def test7(self):
@@ -68,7 +69,8 @@ class CLPTestClass(object):
 class DDLTestClass(object):
         
     def __init__(self):
-        self.dato = DDL()
+        self.SD = StoredDataManager()
+        self.dato = DDL(self.SD)
         
     def test0(self):
         self.dato.setDataBase('third')
@@ -104,7 +106,7 @@ class LogsTestClass(object):
     def test1(self):
         self.dato.Error('This is a test')
         
-
+        
 if __name__ == '__main__':
     print("This is for Science")
     clp = CLPTestClass()
