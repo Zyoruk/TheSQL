@@ -1,13 +1,14 @@
 from DataCatalog import DataCatalog
+from SDManager import StoredDataManager
 from CLP import CLP
 from DDL import DDL
 from Logs import Logs
-from SDManager import StoredDataManager
+from XQTerPlan import XQTerPlan
 
 class DCTestClass(object):
     
-    def __init__(self):
-        self.data = DataCatalog()
+    def __init__(self, DC):
+        self.data = DC
     
     def test1(self):
                    
@@ -27,31 +28,31 @@ class DCTestClass(object):
     
     def test3(self):
         print(self.data.getType("mugre","demonios"))
-        print(self.data.getsPK("mugre"))
-        
-    def test4(self):
-        print(self.data.getColNames("mugre"))
         print(self.data.getTypes("mugre"))
-        print(self.data.getTabNames())
+        print(self.data.getNull('mugre','maria'))
+        print(self.data.getNulls('mugre'))
+        print(self.data.getColNames("mugre"))
         print(self.data.getIndex("mugre", "julia"))
         
-    def test5(self):
-        return self.data.getTabNames()
-    
-    def test6(self):
-        self.test1()
-        print(self.data.getNulls('mugre'))
-        print(self.data.getNull('mugre','maria'))
-        self.data.setFK('mugre', 'moo', 'demonios' )
+    def test4(self):
+        print(self.data.getsPK("mugre"))
+        print(self.data.getTabNames())
+        
+        
+    def test5(self):        
+        print(self.data.setFK('mugre', 'moo', 'demonios' ))
         print(self.data.getFK('mugre'))
         
     def test7(self):
         print(self.data.createIndex('ByName', 'mugre', 'demonios'))
+        
+    def test8(self):
+        print self.data.getFK('mugre')
 
 class CLPTestClass(object):
         
-    def __init__(self):
-        self.data = CLP()
+    def __init__(self, DC, SD):
+        self.data = CLP(DC, SD)
         
     def test1(self):
         print(self.data.listDatabases())
@@ -64,19 +65,33 @@ class CLPTestClass(object):
         print(self.data.listDatabases())
         
     def test3(self):
-        self.data.createDatabase("third")        
+        self.data.createDatabase("third")
+    
+    def test4(self):
+        print(self.data.listDatabases())
+        print(self.data.getStatus())
+        
+    def test5(self):
+        print(self.data.dropDatabase("third"))
+        
+    def test6(self):    
+        print(self.data.createDatabase("second"))
+        
+    def test7(self):
+        print self.data.start()
+        
+    def test8(self):
+        print self.data.stop()
 
 class DDLTestClass(object):
         
-    def __init__(self):
-        self.SD = StoredDataManager()
-        self.dato = DDL(self.SD)
+    def __init__(self, DC, SD):
+        self.dato = DDL(DC, SD)
         
     def test0(self):
-        self.dato.setDataBase('third')
+        print self.dato.setDataBase('second')
         
     def test1(self):
-        self.dato.setDataBase('third')
         names = ['julia','maria','demonios']
         types = ['int', 'double', 'char']
         isNull = ['not null', 'null', 'null']    
@@ -87,7 +102,6 @@ class DDLTestClass(object):
         
         self.dato.createTable('mugre', names, types, isNull , 'julia')
         self.dato.createTable('moo', names1, types1, isNull1 , 'julia')
-        #self.dato.setDataBase(0)
         
     def test2(self):
         self.dato.setDataBase('third')
@@ -95,7 +109,8 @@ class DDLTestClass(object):
         self.dato.setDataBase(0)
         
     def test3(self):
-        self.dato.alterTable('mugre', 'moo', 'demonios')
+        #self.dato.createIndex('ByColumn', 'moo', 'maria')
+        print self.dato.alterTable('mugre', 'demonios', 'moo', 'demonios')
         
 
 class LogsTestClass(object):
@@ -105,18 +120,50 @@ class LogsTestClass(object):
         
     def test1(self):
         self.dato.Error('This is a test')
+
+class XQTestClass(object):
         
+    def __init__(self,DC):
+        self.XQ = XQTerPlan(DC)
         
+    def test1(self):
+        self.XQ.thePlan('moo')        
+
 if __name__ == '__main__':
     print("This is for Science")
-    clp = CLPTestClass()
-    ddl = DDLTestClass()
-    log = LogsTestClass()
-    dc = DCTestClass()
-    clp.test3()
+    SD = StoredDataManager()
+    DC = DataCatalog()
+    
+    clp = CLPTestClass(DC,SD)
+    ddl = DDLTestClass(DC,SD)
+    dc = DCTestClass(DC)
+    
+    #clp.test2()
+    #clp.test3()
+    #clp.test4()
+    #clp.test5()
+    #clp.test3()
+    #clp.test6()
+    ''' SET DB AND START '''
     ddl.test0()
-    #log.test1()
-    dc.test6()
+    clp.test7()
+    '''------------------'''
+    ddl.test1()
+    ddl.test3()
+    dc.test8()
+    
+    
+    #dc = DCTestClass(DC)
+    #dc.test1()
+    #dc.test3()
+    
+    
+    ''' STOP DB '''
+    clp.test8()
+    ''' --------'''
+    #clp.test7()
+    
+
     
     
     
