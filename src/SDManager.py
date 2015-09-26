@@ -37,14 +37,14 @@ class StoredDataManager(object):
         self.dbname = None
         self.env = None
 
-	def loadData(self, sysCat):
-		self.sysCat = sysCat
+    def loadData(self, sysCat):
+        self.sysCat = sysCat
         fh = open ('' + EVM_LIST + '/VARIABLES.json', 'r' )
         self.dbname = JSONDecoder().decode(fh.readline())['db']
         self.env = '' + EVM_LIST +'/' + self.dbname + '/info/'
         
-	def destruct(self):
-		self.sysCat = None
+    def destruct(self):
+        self.sysCat = None
         self.dbname = None
         self.env = None
         
@@ -60,9 +60,31 @@ class StoredDataManager(object):
             elif isinstance(columns, list) and isinstance (values,list):            
                 indexes = [] 
                 
-                #Verificar que los datos cumplan con los tipos de datos
+                fks = self.sysCat.getFKChilds(table)
+                if fks == False: pass
+                else:
+                    for fk in fks:
+                        if fk[1] in columns: return 'Cannot update parents referenced data'
+                
+                fks = self.sysCat.getFK(table)
+                if fks == False: pass
+                else:
+                    for fk in fks:
+                        tableRef = fk["reftable"]
+                        columnRef = fk["refcolumn"]
+                        currCol =  fk["column"]
+                        
+                        referencedValues = self.getAllValues(tableRef, columnRef)
+                        i = self.sysCat.getIndex(table, currCol)
+                        
+                        if not (values[i] in referencedValues): return 'Violation of FK'                
+ 
+                #Check data types
                 for i in range (0, len(columns)):
-                    if self.validType(self.sysCat.getType(table, columns[i]),values[i]):
+                    ty = self.sysCat.getType(table, columns[i])
+                    if self.validType(ty,values[i]):
+                        if ty == 'INTEGER' or 'DECIMAL' in ty and values[i] == 'NULL':
+                            values[i] = MININT
                         continue
                     else:
                         return -1
@@ -70,14 +92,15 @@ class StoredDataManager(object):
                 for column in columns:
                     indexes.append(self.sysCat.getIndex(table, column)-1)
                 
-                #Abrimos la tabla
                 sd = SD.StoredData(5,'' + self.env+ table +'.json')
+                
                 #Data Format to read/write
                 dataFormat = ''
                 types = list(self.sysCat.getTypes(table)[:-1])
                 types.reverse()
                 for ty in types:
-                    dataFormat += self.getPackFormat(ty) 
+                    dataFormat += self.getPackFormat(ty)
+                     
                 #Data                
                 dataKey = list(unpack( dataFormat, sd.get(key)))
                 for i in indexes:
@@ -92,23 +115,53 @@ class StoredDataManager(object):
                 sd.erase()
                 #Re- construct the tree with an empty file
                 sd = SD.StoredData(5,'' + self.env+ table +'.json')
-                #Insert each item != removed
+                
+                #Insert each item != updated
                 for item in temp:
                     if item[0] != key:
                         sd.insert(item[0], item[1])
+                        
                 sd.insert(key , dataKey)
                 sd.dump()
                 return 0                
+            
             else:
+                
                 if self.validType(self.sysCat.getType(table, columns),values):
+                    
+                    fks = self.sysCat.getFKChilds(table)
+                    
+                    if fks == False: pass
+                    else:
+                        for fk in fks:
+                            if fk[1] == columns: return 'Cannot update parents referenced data'
+                    
+                    fks = self.sysCat.getFK(table)
+                    
+                    if fks == False: pass
+                    else:
+                        
+                        for fk in fks:
+                            tableRef = fk["reftable"]
+                            columnRef = fk["refcolumn"]
+                            currCol =  fk["column"]
+                            
+                            referencedValues = self.getAllValues(tableRef, columnRef)
+                            if not (values  in referencedValues): return 'Violation of FK'  
+  
                     index = self.sysCat.getIndex(table, columns)-1
                     sd = SD.StoredData(5,'' + self.env+ table +'.json')
                     dataFormat = ''
                     types = list(self.sysCat.getTypes(table)[:-1])
                     types.reverse()
+                    
                     for ty in types:
                         dataFormat += self.getPackFormat(ty)
+                        
                     dataKey = list(unpack( dataFormat, sd.get(key)))
+                    
+                    if values == 'NULL' and types[index] == 'INTEGER': values = MININT
+                    
                     dataKey[index] = values
                     dataKey = self.packData(types, dataKey)
                     #Get all previous elements
@@ -137,28 +190,64 @@ class StoredDataManager(object):
             return True
         else: return -1 
         
+        
+        
     def insert(self, table, key, columns, values ):
         
         if self.exists(table) and len(columns) == len(values):
+            fks = self.sysCat.getFK(table)
+            if fks == False: pass
+            else:
+                for fk in fks:
+                    tableRef = fk["table"]
+                    columnRef = fk["columnsRef"]
+                    currCol =  fk["column"]
+                    
+                    referencedValues = self.getAllValues(tableRef, columnRef)
+                    i = self.sysCat.getIndex(table, currCol)
+                    
+                    if not (values[i] in referencedValues): return 'Violation of FK'
+                    
+            fks = self.sysCat.getFKChilds(table)
+            
+            if fks == False:
+                pass
+            else:
+                for fk in fks :
+                    tableRef = fk[0]
+                    colRef = fk[1]
+                    i = self.sysCat.getIndex(table, colRef)
+                    myColdata = self.getAllValues(table, colRef)
+                    if values[i] in  myColdata: return 'Father\'s referenced column must have unique values'
+                    
+                
             Types = []
+            
             for column in columns:
-                #Existe la columna?
-                if self.sysCat.getIndex(table, column) == -1: return -1
-                #Armar las que hacen falta    
+                if self.sysCat.getIndex(table, column) == -1: return 'Check columns existance'
+                
+                #Add missing values if null is accepted  
                 for value in values:
+                    
                     if value == 'NULL':
+                        
                         if self.sysCat.getNull(table, column):
-                            # Hay que verificar que los tipos de datos sean correctos para columna.
+                            
+                            # Check data type.
                             valtype = self.sysCat.getType(table, column)
+                            if valtype == 'INTEGER' or 'DECIMAL' in valtype:
+                                value = MININT
+                            
                             if self.validType(valtype,value):
                                 Types.append(valtype)
                                 break
                             else:
                                 return -1
+                            
                         else:
                             return -1
                     else:
-                        # Hay que verificar que los tipos de datos sean correctos para columna.
+                        #Check data type
                         valtype = self.sysCat.getType(table, column)
                         if self.validType(valtype,value):
                             Types.append(valtype)
@@ -169,7 +258,7 @@ class StoredDataManager(object):
             cols = columns
             vals = values
             
-            #Verificar columnas que hacen falta, y si hacen falta, ver si aceptan null
+            #Check for missing columns
             for col in self.sysCat.getColNames(table)[:-1]:
                 if col in columns:
                     pass
@@ -177,14 +266,17 @@ class StoredDataManager(object):
                     print self.sysCat.getNull(table,col)
                     if self.sysCat.getNull(table, col):
                         cols.append(col)
-                        Types.append(self.sysCat.getType(table, col))
-                        vals.append('NULL')
+                        ty = self.sysCat.getType(table, col)
+                        Types.append(ty)
+                        if ty == 'INTEGER' or 'DECIMAL' in ty:
+                            vals.append(MININT)
+                        else:
+                            vals.append('NULL')
                     else:
                         return -1
             
-            #ordenar los datos con respecto al orden de la tabla
-            temp  = list(self.sysCat.getColNames(table))
-            temp.reverse()           
+            #sort columns according to table order
+            temp  = list(self.sysCat.getColNames(table))     
             for i in range(0, len(cols)):
                 for j in range (0, len(cols)):
                     if temp[j] == cols[i]:
@@ -199,7 +291,12 @@ class StoredDataManager(object):
                         t = Types[j]
                         Types[j] = Types[i]
                         Types[i] = t
-            #con los datos ordenados, hay que tomar cada uno y con su tipo, convertirlos a bytes
+            
+            #metadata stores data reversed
+            Types.reverse()
+            values.reverse()
+            
+            #Convert to bytes
             convertedDataList = self.packData(Types, values)
             sd = SD.StoredData(5,'' + self.env+ table +'.json') 
             sd.insert(key, convertedDataList)
@@ -227,6 +324,7 @@ class StoredDataManager(object):
     def packData(self, types, values):
         result= ''
         for i in range(0, len(types)):
+            
             if values[i] == 'NULL' and types[i] == 'INTEGER':
                 result+= (pack('i', MININT))
                 continue
@@ -266,29 +364,34 @@ class StoredDataManager(object):
             for ty in self.sysCat.getTypes(table):
                 unpackFormat += self.getPackFormat(ty)
             
-            for item in SD.StoredData(5,'' + table +'.json').getAll():
+            for item in SD.StoredData(5,'' + self.env + table +'.json').getAll():
                 t = []                
                 t.append(item)
                 t.append(unpack(unpackFormat, item[1]))
                 result.append(t)                
-            return t
+            return result
         return -1
     
     def getAllKeys(self, table):
         if self.exists(table):
             res = []
-            l =  SD.StoredData(5,'' + table +'.json').getAll()
+            l =  SD.StoredData(5,'' + self.env + table +'.json').getAll()
             for item in l:
                 res.append(item[0])
             return res
         return -1
     
     def remove(self,table,key):
+        
         if self.exists(table):
+            
+            if self.sysCat.getFKChilds(table) != False: return 'Cannot remove data from a parent'
+            
             sd = SD.StoredData(5,'' + self.env+ table +'.json')
             t = sd.getAll()
             sd.erase()
-            sd = SD.StoredData(5,'' + self.env+ table +'.json') 
+            sd = SD.StoredData(5,'' + self.env+ table +'.json')
+             
             for item in t :
                 if item[0] != key:
                     sd.insert(item[0], item[1])
@@ -296,7 +399,11 @@ class StoredDataManager(object):
         return -1
     
     def erase(self,table):
+        
         if self.exists(table):
+            
+            if self.sysCat.getFKChilds(table) != False: return 'Cannot remove data from a parent'
+            
             sd = SD.StoredData(5,'' + self.env+ table +'.json')
             sd.erase()
             sd.dump()            
@@ -337,39 +444,44 @@ import DDL
 import unittest
 class TesterClass(unittest.TestCase):
     def test1(self):
-		self.syscat = DataCatalog()
         self.sdman = StoredDataManager()
-        self.sdman.loadData(self.syscat)
-        self.ddl = DDL.DDL()
-        self.ddl.setDataBase('naDB')
+        self.ddl = DDL.DDL(self.sdman)
+        self.syscat = DataCatalog()
+        self.ddl.setDataBase('naDB')        
         self.syscat.setNewTable('test1', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'],'ID')
+      
+        self.sdman.loadData(self.syscat)
+        #self.ddl = DDL.DDL(self.syscat, self.sdman)
         self.sdman.insert('test1', 0, ['Nom','Age'], ['A', 1])
         self.sdman.insert('test1', 1, ['Nom','Age'], ['B', 2])
         self.sdman.insert('test1', 2, ['Nom','Age'], ['C', 3])
-        self.sdman.insert('test1', 3, ['Nom','Age'], ['D', 4])
+        self.sdman.insert('test1', 3, ['Age', 'Nom'], [ 4, 'D'])
         self.sdman.insert('test1', 4, 'Nom', 'D')
         print self.sdman.getAllasArray('test1')
         
     def MOTtest2(self):
         self.sdman = StoredDataManager()
-        self.ddl = DDL.DDL()
+        self.ddl = DDL.DDL(self.syscat, self.sdman)
         self.syscat = DataCatalog()
         self.sdman.update('test1', 0, ['Nom','Age'], ['Andres',54])
         print self.sdman.getAllasArray('test1')
     
     def NOTtest3(self):
         self.sdman = StoredDataManager()
-        self.ddl = DDL.DDL()
+        self.ddl = DDL.DDL(self.syscat, self.sdman)
         self.syscat = DataCatalog()
         self.sdman.update('test1', 0, 'Nom', 'asas')
         self.sdman.update('test1', 0, 'Age', 100)
         print self.sdman.getAllasArray('test1')
         
     def test4(self):
-        self.ddl = DDL.DDL()
-        self.syscat = DataCatalog()
-        self.syscat.setNewTable('test3', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NULL'],'ID')
         self.sdman = StoredDataManager()
+        #self.ddl = DDL.DDL(self.syscat, self.sdman)
+        self.ddl = DDL.DDL(self.sdman)
+        self.ddl.setDataBase('naDB')
+        self.syscat = DataCatalog()        
+        self.sdman.loadData(self.syscat)
+        self.syscat.setNewTable('test3', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'],'ID')
         self.sdman.insert('test3', 1, ['Nom','Age'], ['B', 2])
         self.sdman.insert('test3', 2, ['Nom','Age'], ['C', 3])
         self.sdman.insert('test3', 3, ['Nom','Age'], ['D', 4])

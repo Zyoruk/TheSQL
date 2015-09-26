@@ -22,6 +22,11 @@ Created on Sep 13, 2015
 import SDManager as SDM
 import os.path
 import DataCatalog as DC
+from json import dumps
+import lxml.etree
+#Do not remove import lxml.builder
+import lxml.builder
+
 class DML(object):
     '''
     classdocs
@@ -35,40 +40,64 @@ class DML(object):
         
     def insertInto(self, table, columns, values):
         if table in self.syscat.getTabNames():
-            lKey = self.sdm.getAllKeys(table)
-            for key in lKey:
-                self.sdm.update(table, key, columns, values)
+            if columns == []:
+                return -1 
+            else:
+                sets = []
+                for i in range(0, len(values)):
+                    t = [columns[i], '=', values[i]]
+                    sets.append(t)
+                
+                if self.checkCond(table, sets) == False: return  'Check data types, values or columns.'
+
+                pk = self.syscat.getsPK(table)
+                if pk in columns: return 'Primary Key must not be included.'
+                
+                for key in self.sdm.getAllKeys(table):
+                    self.sdm.update(table, key, columns, values) 
+                return 0
         return -1
     
     def deleteFrom(self, table, where = {}):
         if table in self.syscat.getTabNames():   
             if where == {}:
-                return self.sdm.erase(table)
+                self.sdm.erase(table)
             else:
+                if self.checkCond(table, where) == -1 : return 'Check where statement.'
                 toDelete = self.whereRipper(table, where)
                 if toDelete != []:
                     for item in toDelete:
                         self.sdm.remove(table, item[0])
-                    return 0
+                return 0
         return -1
     
     def update(self, table, columns, values, where = []):
-        #hay que Verificar que no se esta tratando de hacer update a un PK de otra tabla
-        if (self.syscat.getsPK(table) in columns) or (os.path.isfile(table) == False):
+        #hay que Verificar que no se esta tratando de hacer update a un PK
+        if (self.syscat.getsPK(table) in columns) or (not(table in self.syscat.getTabNames())):
             return -1
-                
+        
+        #Verificar que los valores cumplas con los tipos de datos de las columnas
+        sets = []
+        
+        for i in range(0, len(values)):
+            t = [columns[i], '=', values[i]]
+            sets.append(t)
+        
+        if self.checkCond(table, sets) == False: return 'Check data types, values or columns.'         
+        
         rows = []     
+        
         if where == []:
             rows = self.sdm.getAll(table)
         else:
-            rows = self.whereRipper(table, where)
-
+            if self.checkCond(table, where) == -1 : return 'Check where statement.'
+            rows = self.whereRipper(self.join(table), where)
+            
         for row in rows:
             self.sdm.update(table, row[0], columns, values)
                 
         return 0
         
-    #TODO
     def join(self,tables):
         result = []
         temp = []
@@ -99,9 +128,7 @@ class DML(object):
     def whereRipper(self, listset , where = []):
         if where== []:
             return listset
-        
-        #if self.checkCond(where) == -1 : return -1
-        
+
         names = list(listset[0])
         regs = list(listset[1:])
     
@@ -163,18 +190,17 @@ class DML(object):
         return result
                  
     def isDateTime(self, val):
-        if len(val) == 10s:
-			nums = str(val).split('/')
-			if len(a) == 3:
-				if len(nums[0]) == 2 and len(nums[0]) == len(nums[1]) and len(nums[2]) == 4:
-					for num in nums:
-						if num.isnumeric():
-							continue
-						else:
-							return False
-					return True
-		return False
-					
+        if len(val) == "10":
+            nums = str(val).split('/')
+            if len(nums) == 3:
+                if len(nums[0]) == 2 and len(nums[0]) == len(nums[1]) and len(nums[2]) == 4:
+                    for num in nums:
+                        if num.isnumeric():
+                            continue
+                        else:
+                            return False
+                        return True
+        return False
     
     def checkCond(self, tables, conds):
         for cond in conds:
@@ -195,71 +221,147 @@ class DML(object):
                                             continue
                                         else:
                                             return False
-            if len(cond) == 3 :                
+            if len(cond) == 3 :  
+                     
                 val1 = cond[0]
                 val2 = cond[2]
-                
-                if isinstance(val1, str) and isinstance(val2, int) or isinstance(val1, int) and isinstance(val2, str):
-                    return False
-                elif isinstance(val1, int) and isinstance(val2, int):
+                if isinstance(val1, int) and isinstance(val2, int):
                     continue
                 elif isinstance(val1, str) and isinstance(val2, str):
                     if '.' in val1 and '.' in val2: 
                         if val1.split('.')[0] in tables and val2.split('.')[0] in tables:                        
                             type1 = self.syscat.getType(val1.split('.')[0], val1.split('.')[1])
                             type2 = self.syscat.getType(val2.split('.')[0], val2.split('.')[1])
-                        elif  val1.split('.')[0] in self.syscat.getColNames(tables):
+                        elif  val1.split('.')[0] in tables:
                             type1 = self.syscat.getType(val1.split('.')[0], val1.split('.')[1])
                             if self.isDateTime(val2):
                                 type2 = 'DATETIME'
                             else: 
                                 type2 = 'VARCHAR'
-                        elif val2.split('.')[0] in self.syscat.getColNames(tables):
+                        elif val2.split('.')[0] in tables:
                             type2 = self.syscat.getType(val2.split('.')[0], val2.split('.')[1])
                             if self.isDateTime(val1):
                                 type1 = 'DATETIME'
                             else: 
                                 type1 = 'VARCHAR'
                     elif '.' in val1:
-                        if val1.split('.')[0] in self.syscat.getColNames(tables):
+            
+                        if val1.split('.')[0] in tables :
                             type1 = self.syscat.getType(val1.split('.')[0], val1.split('.')[1])
                             if self.isDateTime(val2):
                                 type2 = 'DATETIME'
                             else: 
                                 type2 = 'VARCHAR'
                     elif '.' in val2:
-                        if val2.split('.')[0] in tables and val2.split('.')[1] in self.syscat.getColNames(tables):
+                        if val2.split('.')[0] in tables:
                             type2 = self.syscat.getType(val2.split('.')[0], val2.split('.')[1])
                             if self.isDateTime(val1):
                                 type1 = 'DATETIME'
                             else: 
                                 type1 = 'VARCHAR'
                     else:
-                        if val1 in self.syscat.getColNames(tables) and val2 in self.syscat.getColNames(tables):
-                            type1 = self.syscat.getType(tables, val1)
-                            type2 = self.syscat.getType(tables, val2)
-                        elif val1 in self.syscat.getColNames(tables):
-                            type1 = self.syscat.getType(tables, val1)
+                        if len(tables)== 1:
+                            
+                            if val1 in self.syscat.getColNames(tables[0]) and val2 in self.syscat.getColNames(tables[0]):
+                                type1 = self.syscat.getType(tables, val1)
+                                type2 = self.syscat.getType(tables, val2)
+                            elif val1 in self.syscat.getColNames(tables[0]):
+                                type1 = self.syscat.getType(tables[0], val1)
+                                if isinstance(val2, str):
+                                    if self.isDateTime(val2):
+                                        type2 = 'DATETIME'
+                                    else:
+                                        type2 = 'VARCHAR'
+                                elif isinstance(val2 , int):
+                                    type2 = 'INTEGER'
+                            elif val2 in self.syscat.getColNames(tables[0]):
+                                type2 = self.syscat.getType(tables[0], val2)
+                                if isinstance(val1, str):
+                                    if self.isDateTime(val1):
+                                        type1 = 'DATETIME'
+                                    else:
+                                        type1 = 'VARCHAR'
+                                elif isinstance(val1 , int):
+                                    type1 = 'INTEGER'
+                            else:
+                                type1 = 'VARCHAR'
+                                type2 = 'VARCHAR'
+
+                elif isinstance(val1, str):
+                    if '.' in val1:
+                        if val1.split('.')[0] in tables and val1.split('.')[1] in self.syscat.getColNames(val1.split('.')[0]):
+                            type1 = self.syscat.getType(val1.split('.')[0], val1.split('.')[1])
+                            if isinstance(val2, str):
+                                    if self.isDateTime(val2):
+                                        type2 = 'DATETIME'
+                                    else:
+                                        type2 = 'VARCHAR'
+                            else:
+                                type2 = 'INTEGER'
+                        else:
+                            type1 = 'VARCHAR'
                             if isinstance(val2, str):
                                 if self.isDateTime(val2):
                                     type2 = 'DATETIME'
                                 else:
                                     type2 = 'VARCHAR'
-                            elif isinstance(val2 , int):
+                            else:
                                 type2 = 'INTEGER'
-                        elif val2 in self.syscat.getColNames(tables):
-                            type2 = self.syscat.getType(tables, val2)
+                    else:
+                            if isinstance(val2, str):
+                                if self.isDateTime(val2):
+                                    type2 = 'DATETIME'
+                                else:
+                                    type2 = 'VARCHAR'
+                            else:
+                                type2 = 'INTEGER'
                             if isinstance(val1, str):
                                 if self.isDateTime(val1):
                                     type1 = 'DATETIME'
                                 else:
                                     type1 = 'VARCHAR'
-                            elif isinstance(val1 , int):
+                            else:
+                                type1 = 'INTEGER'
+                elif isinstance(val2, str):
+                    if '.' in val2:
+                        if val2.split('.')[0] in tables and val2.split('.')[1] in self.syscat.getColNames(val2.split('.')[0]):
+                            type2 = self.syscat.getType(val2.split('.')[0], val2.split('.')[1])
+                            if isinstance(val1, str):
+                                    if self.isDateTime(val1):
+                                        type1 = 'DATETIME'
+                                    else:
+                                        type1 = 'VARCHAR'
+                            else:
+                                type1 = 'INTEGER'
+                        else:
+                            type2 = 'VARCHAR'
+                            if isinstance(val1, str):
+                                if self.isDateTime(val1):
+                                    type1 = 'DATETIME'
+                                else:
+                                    type1 = 'VARCHAR'
+                            else:
+                                type1 = 'INTEGER'
+                    else:
+                            if isinstance(val2, str):
+                                if self.isDateTime(val2):
+                                    type2 = 'DATETIME'
+                                else:
+                                    type2 = 'VARCHAR'
+                            else:
+                                type2 = 'INTEGER'
+                            if isinstance(val1, str):
+                                if self.isDateTime(val1):
+                                    type1 = 'DATETIME'
+                                else:
+                                    type1 = 'VARCHAR'
+                            else:
                                 type1 = 'INTEGER'
             if self.valid(type1, type2):
                 continue
             else: 
                 return False
+        return True
     
     def valid(self, type1, type2):
         if type1 == 0 or type2 == 0:
@@ -267,10 +369,10 @@ class DML(object):
         elif (type2 == 'DATETIME' and ('CHAR' in type1 )) or (type1 == 'DATETIME' and ('CHAR' in type2 )):
             return False
         elif (type1 == 'INTEGER' and type2 != 'INTEGER') or (type2 == 'INTEGER' and type1 != 'INTEGER'):
-			return False
-		else:
-			return True
-			
+            return False
+        else:
+            return True
+                
     def compare (self, operator, tableVal, compVar = None):
         if operator == '=':
             return tableVal == compVar
@@ -317,47 +419,140 @@ class DML(object):
                 return False 
      
     #TODO
-    def Select(self, tables = [], columns = [], form = '0', where = [], on=[]):
-        #1 Perform from
-        result_set = self.join(tables) 
+    def Select(self, columns = [], tables = [], where = [], groupBy = [], form = '0'):
+        if tables == []: return 'At least one table must be used'
         
-        print 
+        #Perform Join       
+        resultSet = self.join(tables)
         
+        #Perform Where Statement
+        if where != []:
+            #Check where data types
+            if self.checkCond(tables, where) == -1 : return 'Check where statement.'
+            #Filtering.
+            resultSet = self.whereRipper(resultSet, where)
+        
+        #Perform Group By
+        if groupBy != [] and not (groupBy in columns): return 'group by columns must be inside the select'
+        elif groupBy != [] and groupBy in columns:
+            print 
+    
+    def groupBy(self,result_set, group_cols):
+        return 0 
             
-    def FormatXML(self, resultSet):
-        print 'a'
+    def FormatXML(self, resultSet):        
+        colnames = resultSet [0]
+        regs = resultSet[1:]
+        
+        st = 'lxml.builder.ElementMaker().root(lxml.builder.ElementMaker().doc('
+        
+        for reg in regs:
+            st += 'lxml.builder.ElementMaker().field('
+            for i in range (0, len(colnames)):
+                if i == len(colnames) -1 :
+                    st += '' + str(colnames[i]) + '=' + '\"' + str(reg[i]) + '\"'
+                else:
+                    st += '' + str(colnames[i]) + '=' + '\"' + str(reg[i]) + '\"' + ','
+            st += '' + '),'
+        st = st[0:-1]
+        st += '' + '))'    
+        the_doc = eval (st)
+        
+        print lxml.etree.tostring(the_doc, pretty_print=True)
+    
+    def FormatJSON(self,resultset):
+        result = []
+        col_names = resultset[0]
+        regs = resultset[1:]
+        
+        for reg in regs:
+            
+            t = {}            
+            for i in range(0, len(col_names)):
+                t[col_names[i]] = reg[i]
+            result.append(t)
+            
+        return dumps(result,  sort_keys = False, indent = 2, separators=(',', ': '))
+            
+        
+        
+        
         
 import unittest
 class Test(unittest.TestCase):
     
-    def nottest1(self):
+    def notest1(self):
         self.sdman = SDM.StoredDataManager()
         self.syscat = DC.DataCatalog()
+        self.sdman.loadData(self.syscat)
         self.dml = DML(self.sdman, self.syscat)
-        self.dml.insertInto('test1', 'Nom', 'Luis')
+        print self.dml.insertInto('test1', ['Nom'], ['Luis'])
     
     def nottest2(self):
         self.sdman = SDM.StoredDataManager()
         self.syscat = DC.DataCatalog()
+        self.sdman.loadData(self.syscat)
         self.dml = DML(self.sdman, self.syscat)
         self.dml.deleteFrom('test1')
     
-    def test3(self):
+    def ntest3(self):
         self.sdman = SDM.StoredDataManager()
         self.syscat = DC.DataCatalog()
+        self.sdman.loadData(self.syscat)
         self.dml = DML(self.sdman, self.syscat)
         listset = self.dml.join(['test1','test3'])
+        print listset
         print self.dml.whereRipper(listset, [['test1.Age', '=', 3]])
         print self.dml.whereRipper(listset, [['test1.ID', '>', 1], 'OR', ['test3.Age', '>', 0]])
         print self.dml.whereRipper(listset, [['test1.ID', '>', 5], 'AND', ['test3.Age', '>', 0], 'OR', ['test3.Age', '>', 5]])
     
-    def ntest4(self):
+    def notest4(self):
         self.sdman = SDM.StoredDataManager()
         self.syscat = DC.DataCatalog()
+        self.sdman.loadData(self.syscat)
         self.dml = DML(self.sdman, self.syscat)
         listset = self.dml.join('test1')
         print listset
         print self.dml.whereRipper(listset, [[5, '=', 5]])
+    
+    def nottest5(self):
+        self.sdman = SDM.StoredDataManager()
+        self.syscat = DC.DataCatalog()
+        self.sdman.loadData(self.syscat)
+        self.dml = DML(self.sdman, self.syscat)
+        print self.dml.checkCond(['test1'], [['test1.Age', '=', 'Luis']])
+        print self.dml.checkCond(['test1'], [['test1.Age', '=', 'test1.ID']])
+        print self.dml.checkCond(['test1'], [['test1.Age', '=', 1]])
+        print self.dml.checkCond(['test1'], [[1, '=', 'test1.Age']])
+        print self.dml.checkCond(['test1'], [[3, '=', 'test1.Nom']])
+        print self.dml.checkCond(['test1'], [['Luis', '=', 'Luis']])
+        print self.dml.checkCond(['test1'], [['Luis', '=', 5]])
+    
+    def nomtest6(self):
+        print 'Test6: Update method'
+        self.sdman = SDM.StoredDataManager()
+        self.syscat = DC.DataCatalog()
+        self.sdman.loadData(self.syscat)
+        self.dml = DML(self.sdman, self.syscat)
+        print self.dml.update('test1', ['Nom'], ['Luis'], [['Nom', '=', 'Andres']])
+        print self.dml.update('test1', ['Nom'], ['Luis'], [['Nom', '=', 5]])
+
+    def nomtest7(self):
+        self.sdman = SDM.StoredDataManager()
+        self.syscat = DC.DataCatalog()
+        self.sdman.loadData(self.syscat)
+        self.dml = DML(self.sdman, self.syscat)
+        listset = self.dml.join('test1')
+        print self.dml.FormatJSON(listset)
+        
+    def nomtest8(self):
+        
+        self.sdman = SDM.StoredDataManager()
+        self.syscat = DC.DataCatalog()
+        self.sdman.loadData(self.syscat)
+        self.dml = DML(self.sdman, self.syscat)
+        listset = self.dml.join('test1')
+        print self.dml.FormatXML(listset)
         
 if __name__ == '__main__':
     unittest.main()

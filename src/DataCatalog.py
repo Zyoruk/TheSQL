@@ -205,8 +205,8 @@ class DataCatalog(object):
                          'FK':False, 
                          'index':False,
                          'columns':cols}
-                                    
-                if os.path.isfile(tName):
+                             
+                if os.path.isfile(self.metaPath + '/' + str(tName)):
                     log = 'Error 1: File not found'
                     self.sendError(log)
                     return log
