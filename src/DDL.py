@@ -60,12 +60,6 @@ class DDL(object):
             info = self.infoPath + '/' + str(table_name) + '.json'
             meta = self.metaPath + '/' + str(table_name) + '.json'
             
-<<<<<<< HEAD
-            #Se eliminan archivos para mantener la posibilidad de la creacion de nuevas tablas.
-            if os.path.exists(info):
-                os.remove(info)
-                os.remove(meta)
-=======
             if self.dato.getFK() == False:
                 #Se eliminan archivos para mantener la posibilidad de la creacion de nuevas tablas.
                 if os.path.exists(info):
@@ -75,7 +69,6 @@ class DDL(object):
                 else:
                     log = "Error 1: No such table in this environment."
                     self.sendError(log)
->>>>>>> d07dc70e44bb9cb924b54563ac1e634fc238d22e
             else:
                 log =  'Error 23: Table has FK'
                 self.sendError(log)           

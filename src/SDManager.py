@@ -442,16 +442,18 @@ class StoredDataManager(object):
     
 import DDL
 import unittest
+import CLP
 class TesterClass(unittest.TestCase):
     def test1(self):
         self.sdman = StoredDataManager()
-        self.ddl = DDL.DDL(self.sdman)
         self.syscat = DataCatalog()
-        self.ddl.setDataBase('naDB')        
-        self.syscat.setNewTable('test1', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'],'ID')
-      
         self.sdman.loadData(self.syscat)
-        #self.ddl = DDL.DDL(self.syscat, self.sdman)
+        self.ddl = DDL.DDL(self.syscat, self.sdman)
+        self.clp = CLP.CLP(self.syscat, self.sdman)
+        self.clp.createDatabase('naDB')
+        self.ddl.setDataBase('naDB')
+        self.clp.start()
+        self.ddl.createTable('test1', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'], 'ID')    
         self.sdman.insert('test1', 0, ['Nom','Age'], ['A', 1])
         self.sdman.insert('test1', 1, ['Nom','Age'], ['B', 2])
         self.sdman.insert('test1', 2, ['Nom','Age'], ['C', 3])
@@ -475,13 +477,16 @@ class TesterClass(unittest.TestCase):
         print self.sdman.getAllasArray('test1')
         
     def test4(self):
+
         self.sdman = StoredDataManager()
-        #self.ddl = DDL.DDL(self.syscat, self.sdman)
-        self.ddl = DDL.DDL(self.sdman)
-        self.ddl.setDataBase('naDB')
-        self.syscat = DataCatalog()        
+        self.syscat = DataCatalog()
         self.sdman.loadData(self.syscat)
-        self.syscat.setNewTable('test3', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'],'ID')
+        self.ddl = DDL.DDL(self.syscat, self.sdman)
+        self.clp = CLP.CLP(self.syscat, self.sdman)
+        self.clp.createDatabase('naDB')
+        self.ddl.setDataBase('naDB')
+        self.clp.start()
+        self.ddl.createTable('test3', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'],'ID')
         self.sdman.insert('test3', 1, ['Nom','Age'], ['B', 2])
         self.sdman.insert('test3', 2, ['Nom','Age'], ['C', 3])
         self.sdman.insert('test3', 3, ['Nom','Age'], ['D', 4])

@@ -40,6 +40,7 @@ class DataCatalog(object):
         for jason in onlyfiles:         
                 if jason.endswith('.json'):
                     tablePath = self.metaPath + jason
+                    #print tablePath
                     with open(str(tablePath), 'r') as self.sysCat:
                         tableData = json.load(self.sysCat)
                     self.meta.append(tableData)
@@ -91,18 +92,19 @@ class DataCatalog(object):
             return 0
         self.db = self.getTableMetadata(table)
         cat = self.db['FK']
-        self.sysCat.close()       
+#        self.sysCat.close()       
         return cat
     
     def getFKChilds(self, table):
-        onlyfiles = [ f for f in listdir(str(self.metaPath)) if isfile(join(str(self.metaPath),f)) ]
         ls = []
-        for A in onlyfiles:
-            for d in A["FK"]:
-                if d["reftable"] == table:
-                    ls.append([A,d["refcolumn"]])
-            return ls
-        return False
+        for meta in self.meta:
+            
+            if meta["FK"] != False:
+                for child in meta["FK"]:
+                    if child["reftable"] == table:
+                        ls.append([meta["name"],child["refcolumn"]])                
+
+        return ls
         
     
     ''' Return the type of a column '''        
@@ -237,29 +239,12 @@ class DataCatalog(object):
             if os.path.isfile(self.metaPath + '/' + tName):
                 log = 'Error 1: DB exist'
                 self.sendError(log)
-                return log
-<<<<<<< HEAD
-            else:
-                cols = []                           
-                while len(columns_names) != 0:                
-                    cols.append({'name':columns_names.pop(-1),'type':column_type.pop(-1),
-                                 'null':column_nullability.pop(-1), 'index':False})
-                
-                table = {'PK':PK,
-                         'FK':False, 
-                         'index':False,
-                         'columns':cols}
-                             
-                if os.path.isfile(self.metaPath + '/' + str(tName)):
-                    log = 'Error 1: File not found'
-=======
-            
+                return log            
             
             if PK in columns_names:
-                                            
+                                           
                 if len(columns_names) != len(column_type) or len(columns_names) != len(column_nullability):
                     log = 'Error 21: Not enough names for types'
->>>>>>> d07dc70e44bb9cb924b54563ac1e634fc238d22e
                     self.sendError(log)
                     return log
                 
@@ -276,7 +261,13 @@ class DataCatalog(object):
                              'columns':cols}
                     
                     self.meta.append(table)
+                    
+                    with open(self.metaPath + '/' + str(table_name) + '.json', 'w') as sysCat:
+                        json.dump(table, sysCat)
+                        
                     state = True
+                    
+                    
                     
             else:
                 log = 'Error 22: Check for PK in columns'
