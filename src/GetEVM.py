@@ -7,10 +7,10 @@ VARFILE = EVM_LIST + '/' + 'VARIABLES.json'
 class GetEVM():
     
     def __init__(self):
-        return 0
+        return None
         
     def getEVM(self):
-        
+        evm = 0
         try:
             with open(VARFILE, 'r') as sysCat:
                 db = json.load(sysCat)
@@ -19,8 +19,14 @@ class GetEVM():
             with open(VARFILE , 'w') as TMP:
                 json.dump(db,TMP)
         else:
-            self.sysCat.close()
-            
-        return db["db"]
+            evm = db["db"]
+            sysCat.close()
         
+        return evm
+    
+    def setEVM(self,db):
+        DB = {'db':db}
+        with open(VARFILE , 'w') as TMP:
+            json.dump(DB,TMP)
+        TMP.close()
         

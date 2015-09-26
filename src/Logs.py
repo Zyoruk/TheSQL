@@ -1,5 +1,5 @@
 from time import gmtime, strftime
-from os.path import abspath, dirname, join, isfile
+from os.path import abspath, dirname
 import json
 
 EVM_LIST = abspath(dirname('../evm/'))
@@ -44,13 +44,13 @@ class Logs(object):
     def History(self, CMD):
         lineCMD = strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ":" + CMD
         try:
-            with open(self.varfile, 'a') as sysVAR:
-                json.dump(lineCMD,sysVAR)
+            f = open(self.varfile,'a')
         except IOError:
             with open(self.varfile, 'w') as sysVAR:
                     json.dump(lineCMD,sysVAR)
         else:
-            sysVAR.close()
-        
-        
+            f.write(self.varfile)
+            f.close()
+            
+
                 
