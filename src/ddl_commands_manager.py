@@ -19,18 +19,33 @@ This file is part of SQLantro.
 # email: jsnchzjmnz@gmail.com
 # website: jsnchzjmnz.wordpress.com
 
+from DDL import DDL
+import SDManager as SDM
+import DataCatalog as DC
+
+
+class ddl_manager:	
+	
+	def __init__(self):
+		self.logs=[];
+		self.sdman = SDM.StoredDataManager()
+		self.syscat = DC.DataCatalog()
+		self.theddl = DDL(self.syscat, self.sdman)
 		
-def set_database(schemaname):
-	print "aqui es donde asignamos la base de datos "+ schemaname;
+	def set_database(schemaname):
+		print "aqui es donde asignamos la base de datos "+ schemaname;
 
-def drop_table(tablename):
-	print "aqui es donde eliminamos la tabla "+tablename;
-	
-def create_table():
-	print "se crea una tabla";
+	def drop_table(tablename):
+		print "aqui es donde eliminamos la tabla "+tablename;
+		
+	def create_table():
+		print "se crea una tabla";
 
-def alter_table():
-	print "se altera una tabla";
-	
-def create_index():
-	print "Se crea un indice";
+	def alter_table():
+		print "se altera una tabla";
+		
+	def create_index(self,parametros):
+		print "Se crea un indice";
+		print "nombre del indice: " + parametros[0];
+		print "nombre de la tabla: " + parametros[1];
+		print "columna: " + parametros[2];
