@@ -1,7 +1,7 @@
 import copy
 from GetEVM import GetEVM
 import json
-import os.path
+from os.path import abspath, dirname, isfile
 
 EVM_LIST = abspath(dirname('../evm/'))
 
@@ -62,7 +62,6 @@ class GroupBy(object):
                         index += 1
         return result
         
-        
     def getIndeXes (self, ls, pk):
         
         result = []
@@ -75,22 +74,6 @@ class GroupBy(object):
             num += 1
         
         return result
-    
-    def getPKbyVal(self, value):
-        ls = []
-        EVM = GetEVM()
-        evm = EVM.getEVM()
-        ind = EVM_LIST + '/' + str(evm) + '/index/'
-        if os.path.isfile(ind):
-            with open(str(ind), 'r') as sysCat:
-                tableData = json.load(sysCat)
-                num = 0
-                for i in tableData:
-                    
-                    if tableData[i][0] == value:
-                        ls.append(tableData[i][1])
-        
-        return ls
     
     '''Return all columns who has an index''' 
     def getAllIndexesCol(self, table):
@@ -154,7 +137,7 @@ class GroupBy(object):
             self.sendError(log)
             
         return ls
-            
+
 
 if __name__ == '__main__':
     gb = GroupBy()
