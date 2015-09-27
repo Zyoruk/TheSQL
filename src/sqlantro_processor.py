@@ -21,6 +21,8 @@ This file is part of SQLantro.
 
 from syntax_analyzer import *
 from cpl_commands_manager import *
+from ddl_commands_manager import *
+from dml_commands_manager import *
 
 
 class interprete:
@@ -28,60 +30,58 @@ class interprete:
 	def __init__(self):
 		self.logs=[];
 		self.cpl=cpl_manager();
+		self.ddl=ddl_manager();
+		self.dml=dml_manager();
 		
 	def execute(self,parameters):
 		
-		e , words=syntax_analyzer(parameters)
+		e , words, parametros =syntax_analyzer(parameters)
 		answer="";
 		if e<0 :
 			answer=self.error_(e);
 		elif e>0:
-			answer=self.query_(e,words);
+			answer=self.query_(e,words,parametros);
 			
 		return answer;
 
 	#Selecciona la accion que se debe ejecutar	
-	def query_(self,e,words):
+	def query_(self,e,words,parametros):
 		answer="";
-		if e==1:
-			answer=self.cpl.create_database(words[2]);
+		if e==1:# CLP - CREATE DATABASE
+			answer=self.cpl.create_database(parametros);
 			self.logs.append(answer);
-		elif e==2:
+		elif e==2:# CLP - START
 			answer=self.cpl.start();
-		elif e==3:
+		elif e==3:#CLP - STOP
 			answer=self.cpl.stop();
-		elif e==4:
-			answer=self.cpl.drop_database(words[2]);
-		elif e==5:
-			answer=self.cpl.set_database(words[2]);
-		elif e==6:
-			answer=self.cpl.display_database(words[2]);
-		elif e==7:
-			answer=self.cpl.drop_table(words[2]);
-		elif e==8:
+		elif e==4:#DDL - DROP DATABASE
+			answer=self.cpl.drop_database(parametros);
+		elif e==5:#
+			answer="hi"	
+		elif e==6:# CLP - DISPLAY DATABASE
+			answer=self.cpl.display_database(parametros);
+		elif e==7:#CLP - DROP TABLE
+			answer=self.cpl.drop_table(parametros);
+		elif e==8:# CLP - LIST DATABASES
 			answer=self.cpl.list_databases();
-		elif e==9:
+		elif e==9:# CLP - GET STATUS
 			answer=self.cpl.get_status();
 		elif e==10:
-			#set_database();
-			answer= "set database";
-		elif e==11:
-			#delete_database();
-			answer= "delete database";
-		elif e==12:
-			#update_table();
-			answer= "update table";
+			#DDL - SET DATABASE
+			answer=self.ddl.set_database(parametros);
+		elif e==11:#DML - DELETE
+			answer= self.dml.delete(parametros);
+		elif e==12:#DML - UPDATE
+			answer= self.dml.update(parametros);
 		elif e==13:
 			#select();
 			answer= "Select";
-		elif e==14:
+		elif e==14:#DDL - CREATE TABLE
 			answer ="Create table";
-		elif e==15:
-			#create
-			answer ="Create index";
+		elif e==15:#DDL - CREATE INDEX
+			answer=self.ddl.create_index(parametros);
 		elif e==16:
-			#create
-			answer ="insert";
+			answer =self.dml.insert(parametros);
 		return answer;
 
 	#selecciona el mensaje de error que se debe mostrar
@@ -100,23 +100,23 @@ class interprete:
 		elif e==-5:
 			comentario = "Invalid name for table";
 		elif e==-6:
-			comentario = "Invalid command list syntax";
+			comentario = "Invalid list syntax";
 		elif e==-7:
-			comentario = "Invalid command get syntax";
+			comentario = "Invalid get syntax";
 		elif e==-8:
-			comentario = "Invalid command create syntax";
+			comentario = "Invalid create syntax";
 		elif e==-9:
-			comentario = "Invalid command drop syntax";
+			comentario = "Invalid drop syntax";
 		elif e==-10:
 			comentario = "you can not use reserved words";
 		elif e==-11:
-			comentario = "Invalid command display syntax";
+			comentario = "Invalid display syntax";
 		elif e==-12:
-			comentario = "Invalid command set syntax";
+			comentario = "Invalid set syntax";
 		elif e==-13:
-			comentario = "Invalid command set syntax";
+			comentario = "Invalid set syntax";
 		elif e==-14:
-			comentario = "Invalid command update syntax";
+			comentario = "Invalid update syntax";
 		elif e==-15:
 			comentario = "you should use form"
 		elif e==-16:
@@ -125,6 +125,10 @@ class interprete:
 			comentario = "Invalid aggregate functions syntax"
 		elif e==-18:
 			comentario = "Invalid select functions syntax"
+		elif e==-19:
+			comentario = "Invalid delete syntax"
+		elif e==-19:
+			comentario = "La cantidad de columnas no coincide con la cantidad de valores"
 		else:
 			comentario = "Unknown Error";
 			

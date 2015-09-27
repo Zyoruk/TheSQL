@@ -46,6 +46,7 @@ def syntax_analyzer( parameters ):
 	answer=0; #variable que contiene el valor a retornar
 	aux=[]; 
 	words=parameters.split();
+	parametros=[]
 	if len(words)>0:
 
 		
@@ -75,6 +76,7 @@ def syntax_analyzer( parameters ):
 					if reserved_word(words[2]):
 						answer =-10;
 					else:
+						parametros.append(words[2])
 						answer=1;
 				else:
 					answer=-3
@@ -103,15 +105,19 @@ def syntax_analyzer( parameters ):
 			elif words[1].lower()=="index":
 				if len(words)>4:
 					if reserved_word(words[2])==False:
+						parametros.append(words[2])
 						if words[3].lower()=="on":
-							aux="";
+							auxi="";
 							counter=4;
 							while counter<len(words):
-								aux=aux+words[counter];
+								auxi=auxi+words[counter];
 								counter=counter+1;
-							aux.replace(" ","");
-							if create_index_analyzer(aux.lower()):
+							auxi.replace(" ","");
+							resultado_analisis,p=create_index_analyzer(auxi.lower())
+							if resultado_analisis:
 								answer=15;
+								parametros.append(p[0]);
+								parametros.append(p[1]);
 							else:
 								error=-18;
 
@@ -134,6 +140,7 @@ def syntax_analyzer( parameters ):
 					if reserved_word(words[2]):
 						answer=-10;
 					else:
+						parametros.append(words[2])
 						answer=4;
 				else:
 					answer=-3
@@ -144,6 +151,7 @@ def syntax_analyzer( parameters ):
 					if reserved_word(words[2]):
 						answer=-10;
 					else:
+						parametros.append(words[2])
 						answer=7;
 				else:
 					answer=-5
@@ -157,7 +165,8 @@ def syntax_analyzer( parameters ):
 					if reserved_word(words[2]):
 						answer=-10;
 					else:
-						answer=5;
+						parametros.append(words[2])
+						answer=6;
 				else:
 					answer=-3
 			else:
@@ -171,17 +180,28 @@ def syntax_analyzer( parameters ):
 					if reserved_word(words[2]):
 						answer=-10;
 					else:
+						parametros.append(words[2])
 						answer=10;
 				else:
 					answer=-4
-			else:
+			else:				
 				answer=-12;	
+				
+#evalua el insert
 		elif words[0].lower() == "insert" :
 			if len(words)>3:
 				if words[1].lower() == "into":
-					if tablenames_columns_analyzer(words[2].lower()):
-						if values_analyzer(words[3].lower()):
-							answer=16;
+					resultado,tabla,columnas=tablenames_columns_analyzer(words[2].lower());
+					if resultado:
+						resultado, valores=values_analyzer(words[3].lower())
+						if resultado:
+							if len(columnas)==len(valores):
+								parametros.append(tabla)
+								parametros.append(columnas)
+								parametros.append(valores)
+								answer=16;
+							else:
+								answer=-20;
 			else:
 				answer=-2
 #evalua el delete		
@@ -192,20 +212,24 @@ def syntax_analyzer( parameters ):
 					if reserved_word(words[2]):
 						answer=-10;
 					else:
+						parametros.append(words[2])
 						if len(words)==3:
 							answer=11;
 						else:
 							if words[3].lower()=="where" :
-								counter=4;
-								
+								counter=4;	
 								while len(words)>counter:
 									if reserved_word(words[counter]):
 										answer=-10;
 									else:
 										aux.append(words[counter]);
-										#print words[counter];
 									counter=counter+1;
-								where_statement_analyzer(aux);
+								resultado,s=where_statement_analyzer(aux)
+								if resultado:
+									answer=11;
+									parametros.append(aux);
+								else:
+									answer=-19;
 #evalua el update
 		elif words[0].lower() == "update" :
 			if len(words)>2:
@@ -220,7 +244,10 @@ def syntax_analyzer( parameters ):
 							while counter<len(words):
 								aux.append(words[counter]);
 								counter=counter+1;
-							if set_analyzer(aux):
+							r,s,w=set_analyzer(aux)							
+							if r:
+								parametros.append(s);
+								parametros.append(w);
 								answer=12;
 							else:
 								answer=-14;
@@ -257,27 +284,31 @@ def syntax_analyzer( parameters ):
 		else:
 			answer = -1;
 			
-	return answer,words;
+	return answer,words,parametros;
    
  
  
 def create_index_analyzer(parameters):
 	r_parentesis_pos=word_finder(parameters,")");
 	l_parentesis_pos=word_finder(parameters,"(");
+	parametros=[];
 	contador=0;
 	table_name="";
+	column_name="";
 	answer=False;
 	while contador<l_parentesis_pos:
 		table_name=table_name+parameters[contador]
 		contador=contador+1;
 	contador=contador+1;
 	while contador<r_parentesis_pos:
-		column_name=table_name+parameters[contador]
+		column_name=column_name+parameters[contador]
 		contador=contador+1;
 	if len(parameters)==r_parentesis_pos+1:
 		if reserved_word(table_name)==False and reserved_word(column_name)==False:
 				answer=True;
-	return answer;
+				parametros.append(table_name);
+				parametros.append(column_name)
+	return answer,parametros;
    
 
 
@@ -286,36 +317,52 @@ def tablenames_columns_analyzer(parameters):
 	l_parentesis_pos=word_finder(parameters,"(");
 	contador=0;
 	table_name="";
+	column_name="";
 	answer=False;
+	columnas=[];
 	while contador<l_parentesis_pos:
 		table_name=table_name+parameters[contador]
 		contador=contador+1;
 	contador=contador+1;
 	while contador<r_parentesis_pos:
-		column_name=table_name+parameters[contador]
+		column_name=column_name+parameters[contador]
 		contador=contador+1;
 	if len(parameters)==r_parentesis_pos+1:
 		if reserved_word(table_name)==False and reserved_word(column_name)==False:
 				answer=True;
-	return answer;
+				
+	columnas=column_name.split(",");
+	return answer,table_name,columnas;
 
 def values_analyzer(parameters):
 	r_parentesis_pos=word_finder(parameters,")");
 	l_parentesis_pos=word_finder(parameters,"(");
 	contador=0;
-	table_name="";
+	value="";
+	valores="";
+	lista_valores=[];
 	answer=False;
 	while contador<l_parentesis_pos:
-		value=table_name+parameters[contador]
+		value=value+parameters[contador]
 		contador=contador+1;
 	contador=contador+1;
 	while contador<r_parentesis_pos:
-		valores=table_name+parameters[contador]
+		valores=valores+parameters[contador]
 		contador=contador+1;
+		
 	if len(parameters)==r_parentesis_pos+1:
-		if value.lower()=="value" and reserved_word(valores)==False:
-				answer=True;
-	return answer;
+		if value.lower()=="values":
+			lista_valores=valores.split(",");
+			banderisha=True;
+			contador=0;
+			while contador<len(lista_valores) and banderisha:
+				if reserved_word(lista_valores[contador]):
+					banderisha=False;
+				else:
+					contador=contador+1;
+			answer=banderisha;
+		print lista_valores;
+	return answer,lista_valores;
 
 def create_table_analyzer(parameters):
 	r_parentesis_pos=word_finder(parameters,");");
@@ -489,8 +536,7 @@ def select_analyzer(parameters):
 					print parameters[counter];
 					aux.append(parameters[counter]);
 					counter=counter+1;
-				banderisha=where_statement_analyzer(aux);
-				print "banderisha ";
+				banderisha,s=where_statement_analyzer(aux);
 				print banderisha;
 				if banderisha==False:
 					answer=-18;
@@ -572,6 +618,57 @@ def reserved_word( parameters):
 	
 	
 def set_analyzer(expression):
+	where_statement=[];
+	set_statement=[];
+	where_statement_string="";
+	set_statement_string="";
+	contador=0;
+	flag=True;
+	bandera=False;
+	answer=False;
+	
+	while contador<len(expression) and flag:
+		if expression[contador]=="where":
+			flag=False
+		else:		
+			set_statement_string=set_statement_string+expression[contador];
+			contador=contador+1;
+	where_pos=contador;
+	contador=contador;
+	if where_pos < len(expression):
+		contador=contador+1;
+		while contador<len(expression):
+			where_statement.append(expression[contador]);
+			contador=contador+1
+		bandera,where_statement=where_statement_analyzer(where_statement);
+	elif where_pos == len(expression):
+		bandera=True;
+	
+	
+	set_statement=set_statement_string.split(",");
+	#and_or_pos=and_or_finder(where_statement);
+	contador=0;
+	
+	flag=True;
+	while contador<len(set_statement) and flag:
+		contador=contador+1;
+		
+	
+	if bandera and flag:
+		answer=True;
+		r,s=where_statement_analyzer(set_statement[0]);
+		contador=0;
+		r=True;
+		statement=[]
+		while r and contador<len(set_statement):
+			r,s=where_statement_analyzer(set_statement[contador]);
+			statement.append(s[0]);
+			contador=contador+1;
+
+
+	return answer,statement,where_statement;
+	
+	'''
 	result=False;
 	counter=0;
 	aux=[];
@@ -652,7 +749,7 @@ def set_analyzer(expression):
 			result=False;
 	
 	return result;
-
+'''
 
 
 #Analiza la validez de las where statements	
@@ -664,22 +761,37 @@ def where_statement_analyzer(expression):
 	flag=False;
 	error=False;
 	respuesta=False;
+	statement=[];
+	aux=[];
+	wordaux="";
 	while counter<len(expression) and error==False :
 		counter2=0;
 
-		if conj_pos<len(conj):
-			if counter==conj[conj_pos]:
-				state=0;
-				flag=False;
-				conj_pos=conj_pos+1;
-		else:
-			while counter2<len(expression[counter]):
-				c=expression[counter][counter2];
-				if c=='=' or c=='<' or c=='>':
-					flag=True;
+		if len(conj)>0:
+			if conj_pos<len(conj):
+				if counter==conj[conj_pos]:
+					print "!";
+					state=0;
+					flag=False;
+					conj_pos=conj_pos+1;
+					aux.append(wordaux);
+					statement.append(aux)
+					statement.append(expression[counter])
+					aux=[];
+					wordaux="";
+					counter=counter+1;
+		#else:
+		while counter2<len(expression[counter]):
+			c=expression[counter][counter2];
+			if c=='=' or c=='<' or c=='>':
+				aux.append(wordaux);
+				wordaux="";
+				flag=True;
+				if len(expression[counter])>counter2+1:
 					if expression[counter][counter2+1] != None:
 						c=expression[counter][counter2+1]
 						if c=='=' or c=='<' or c=='>':
+							aux.append(expression[counter][counter2]+expression[counter][counter2+1]);
 							if expression[counter][counter2]=='<' and c=='>':
 								counter2=counter2+1;
 							elif expression[counter][counter2]=='<' and c=='=':
@@ -687,26 +799,33 @@ def where_statement_analyzer(expression):
 							elif expression[counter][counter2]=='>' and c=='=':
 								counter2=counter2+1;
 							else:
-								error=True;									
-				else:
-					if flag:
-						state=2;
+								error=True;
+						else:
+							aux.append(expression[counter][counter2]);
 					else:
-						state=1;
-				counter2=counter2+1;
+						aux.append(expression[counter][counter2]);
+				else:
+						aux.append(expression[counter][counter2]);
+													
+			else:
+				wordaux=wordaux+expression[counter][counter2];
+				if flag:
+					state=2;
+				else:
+					state=1;
+			
+			
+			counter2=counter2+1;
+				
 		counter=counter+1;	
+	
+	aux.append(wordaux);
+	statement.append(aux)
+	
 	if error==False and state==2:
 		if conj_pos==0 or conj_pos==len(conj):
 			respuesta=True;
-			
-	
-	
-	print error;
-	print state;
-	print conj_pos;
-	print len(conj);
-	print respuesta;
-	return respuesta;
+	return respuesta,statement;
 
 def and_or_finder(expression):
 	resultado=[];
