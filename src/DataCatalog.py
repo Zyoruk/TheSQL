@@ -355,6 +355,8 @@ class DataCatalog(object):
         errorModule = Logs()
         errorModule.Error(log)
         
+    def getAll(self, table, column):
+        print
     def getPKbyVal(self, value):
         ls = []
         EVM = GetEVM()
@@ -369,16 +371,6 @@ class DataCatalog(object):
                         ls.append(tableData[i][1])
         
         return ls
-
-    def getIndeXes (self, ls, pk):
-        
-        result = []
-        num = 1
-        for elem00 in ls:
-            
-            if elem00 == pk:
-                result.append(num)
-                
-            num += 1
-        
-        return result
+    
+    def reDoIndex(self, table):
+        print 

@@ -97,7 +97,7 @@ class DDL(object):
                 
             regs = json.JSONEncoder(encoding = "ISO-8859-1").encode(regs)            
         
-            with open(self.indexPath + '/' + indexName + '.json', 'w+') as sysCat:
+            with open(self.indexPath + '/' + column + '_' + indexName + '.json', 'w+') as sysCat:
                 #json.dump(regs,sysCat)
                 sysCat.write(regs)
             

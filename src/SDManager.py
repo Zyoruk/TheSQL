@@ -33,7 +33,7 @@ class StoredDataManager(object):
         '''
         Constructor
         '''
-        self.sysCat = DataCatalog()
+        self.sysCat = None
         self.dbname = None
         self.env = None
 
@@ -102,9 +102,10 @@ class StoredDataManager(object):
                     dataFormat += self.getPackFormat(ty)
                      
                 #Data                
-                dataKey = list(unpack( dataFormat, sd.get(key)))
+                tounpack = str(sd.get(key)).encode(encoding = "ISO-8859-1")
+                dataKey = list(unpack( dataFormat, tounpack))
                 for i in indexes:
-                    dataKey[i] = values[i]
+                    dataKey[i-1] = values[i-1]
                 
                 #Data to bytes
                 dataKey = self.packData(self.sysCat.getTypes(table)[1:], dataKey)
@@ -157,12 +158,14 @@ class StoredDataManager(object):
                     
                     for ty in types:
                         dataFormat += self.getPackFormat(ty)
-                        
-                    dataKey = list(unpack( dataFormat, sd.get(key)))
+                    
+                    tounpack = str(sd.get(key)).encode(encoding = "ISO-8859-1")
+                    dataKey = list(unpack( dataFormat, tounpack))
                     
                     if values == 'NULL' and types[index] == 'INTEGER': values = NULLINT
                     
-                    dataKey[index] = values
+
+                    dataKey[index-1] = values
                     dataKey = self.packData(types, dataKey)
                     #Get all previous elements
                     temp = sd.getAll()
@@ -193,7 +196,6 @@ class StoredDataManager(object):
         
         
     def insert(self, table, key, columns, values ):
-        
         if self.exists(table) and len(columns) == len(values):
             fks = self.sysCat.getFK(table)
             if fks == False: pass
@@ -235,7 +237,7 @@ class StoredDataManager(object):
                         values[i] = NULLINT
                         
                 elif values[i] == 'NULL' and not (self.sysCat.getNull(table, columns[i])):
-                    return -1             
+                    return 'Nullability Constraint'             
                     
             cols = columns
             vals = values
@@ -246,7 +248,6 @@ class StoredDataManager(object):
                     continue
                 else: 
                     if self.sysCat.getNull(table, col) == 'NULL':
-                        print col
                         cols.append(col)
                         ty = self.sysCat.getType(table, col)
                         Types.append(ty)
@@ -255,7 +256,7 @@ class StoredDataManager(object):
                         else:
                             vals.append('NULL')
                     else:
-                        return -1
+                        return 'Nullability Constraint'
             
             #sort columns according to table order
             temp  = list(self.sysCat.getColNames(table))     
@@ -373,7 +374,6 @@ class StoredDataManager(object):
         return -1
     
     def getAllKeys(self, table):
-        print self.sysCat.getTabNames()
         if self.exists(table):
             res = []
             l =  SD.StoredData(5,'' + self.env + table +'.json').getAll()
@@ -402,8 +402,8 @@ class StoredDataManager(object):
     def erase(self,table):
         
         if self.exists(table):
-            
-            if self.sysCat.getFKChilds(table) != False: return 'Cannot remove data from a parent'
+
+            if self.sysCat.getFKChilds(table) != []: return 'Cannot remove data from a parent'
             
             sd = SD.StoredData(5,'' + self.env+ table +'.json')
             sd.erase()
@@ -449,10 +449,9 @@ import DDL
 import unittest
 import CLP
 class TesterClass(unittest.TestCase):
-    def notest1(self):
+    def test1(self):
         self.sdman = StoredDataManager()
         self.syscat = DataCatalog()
-        self.sdman.loadData(self.syscat)
         self.ddl = DDL.DDL(self.syscat, self.sdman)
         self.clp = CLP.CLP(self.syscat, self.sdman)
         self.clp.createDatabase('naDB')
@@ -466,26 +465,33 @@ class TesterClass(unittest.TestCase):
         self.sdman.insert('test1', 4, 'Nom', 'D')
         print self.sdman.getAllasArray('test1')
         
-    def MOTtest2(self):
+    def test2(self):
         self.sdman = StoredDataManager()
-        self.ddl = DDL.DDL(self.syscat, self.sdman)
         self.syscat = DataCatalog()
+        self.ddl = DDL.DDL(self.syscat, self.sdman)
+        self.clp = CLP.CLP(self.syscat, self.sdman)
+        self.clp.createDatabase('naDB')
+        self.ddl.setDataBase('naDB')
+        self.clp.start()
         self.sdman.update('test1', 0, ['Nom','Age'], ['Andres',54])
         print self.sdman.getAllasArray('test1')
     
-    def NOTtest3(self):
+    def test3(self):
         self.sdman = StoredDataManager()
-        self.ddl = DDL.DDL(self.syscat, self.sdman)
         self.syscat = DataCatalog()
+        self.ddl = DDL.DDL(self.syscat, self.sdman)
+        self.clp = CLP.CLP(self.syscat, self.sdman)
+        self.clp.createDatabase('naDB')
+        self.ddl.setDataBase('naDB')
+        self.clp.start()
         self.sdman.update('test1', 0, 'Nom', 'asas')
         self.sdman.update('test1', 0, 'Age', 100)
         print self.sdman.getAllasArray('test1')
         
-    def notest4(self):
+    def test4(self):
 
         self.sdman = StoredDataManager()
         self.syscat = DataCatalog()
-        self.sdman.loadData(self.syscat)
         self.ddl = DDL.DDL(self.syscat, self.sdman)
         self.clp = CLP.CLP(self.syscat, self.sdman)
         self.clp.createDatabase('naDB')
@@ -501,7 +507,7 @@ class TesterClass(unittest.TestCase):
         
         print self.sdman.getAllasArray('test3')
         
-    def notest5(self):     
+    def test5(self):     
         data = pack('100si','Rey', 2147483647)
         print [data]
         data = unpack ('100si', data)
@@ -511,7 +517,6 @@ class TesterClass(unittest.TestCase):
     def test6(self):
         self.sdman = StoredDataManager()
         self.syscat = DataCatalog()
-        self.sdman.loadData(self.syscat)
         self.ddl = DDL.DDL(self.syscat, self.sdman)
         self.clp = CLP.CLP(self.syscat, self.sdman)
         self.ddl.setDataBase('naDB')

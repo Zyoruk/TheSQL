@@ -67,7 +67,7 @@ class CLP():
         return dbs
         
     def createDatabase(self,db):
-        directory = EVM_LIST + '/' + db + '/'
+        directory = EVM_LIST + '/' + str(db) + '/'
         if not os.path.exists(directory):
             os.makedirs(directory)
             os.makedirs(directory + '/metadata')

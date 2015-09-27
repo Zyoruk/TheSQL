@@ -87,7 +87,7 @@ class StoredData(dataFormat):
     def erase(self):
         try:
             if isfile(self.path):
-                fh = open(self.path, 'w+',encoding = "ISO-8859-1")
+                fh = codecs.open(self.path, 'w+',encoding = "ISO-8859-1")
                 towrite = {}
                 fh.write(JSONEncoder(encoding = "ISO-8859-1").encode(towrite))
                 dataFormat.__init__(self, self.order)

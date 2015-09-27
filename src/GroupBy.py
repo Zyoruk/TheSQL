@@ -17,18 +17,29 @@ class GroupBy(object):
         
         if len(bygroup) == 1:
             result = self.levelone(data, bygroup)
-        
+            head = result.pop(-1)
+            num = 0
+            for i in cat:
+                if i == head:
+                    cat.pop(num)
+                else:
+                    num += 1
+            cat = [head] + cat
+            result = [cat] + result
         else:
             result = self.levelone( data, [bygroup[0]] )
             for i in range(len(bygroup) - 1):
-                result = self.leveltwo(result, [bygroup[i + 1]])
+                result = [cat] + self.leveltwo(result, [bygroup[i + 1]])
+        
         return result
     
     def leveltwo(self, res):
-        print 'hello'
+        #Next level
+        return 
     
     def levelone(self, data, bygroup):
         result = []
+        name = 0
         for group in bygroup:
                 
                 index = 0        
@@ -40,7 +51,7 @@ class GroupBy(object):
                         for elem_to_group in data:
                             subCol.append(elem_to_group.pop(index))
                             
-                        subCol.pop(0)
+                        name = subCol.pop(0)
                         ls = list(set(subCol))
                         
                         for el in ls:
@@ -60,9 +71,23 @@ class GroupBy(object):
                             result.append(arr)
                     else:
                         index += 1
+                        
+        result.append(name)                
         return result
         
-
+    def getIndeXes (self, ls, pk):
+        
+        result = []
+        num = 1
+        for elem00 in ls:
+            
+            if elem00 == pk:
+                result.append(num)
+                
+            num += 1
+        
+        return result
+    
 if __name__ == '__main__':
     gb = GroupBy()
     
