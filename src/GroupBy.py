@@ -1,7 +1,7 @@
 import copy
 from GetEVM import GetEVM
 import json
-import os.path
+from os.path import abspath, dirname, isfile
 
 EVM_LIST = abspath(dirname('../evm/'))
 
@@ -61,36 +61,6 @@ class GroupBy(object):
                     else:
                         index += 1
         return result
-        
-        
-    def getIndeXes (self, ls, pk):
-        
-        result = []
-        num = 1
-        for elem00 in ls:
-            
-            if elem00 == pk:
-                result.append(num)
-                
-            num += 1
-        
-        return result
-    
-    def getPKbyVal(self, value):
-        ls = []
-        EVM = GetEVM()
-        evm = EVM.getEVM()
-        ind = EVM_LIST + '/' + str(evm) + '/index/'
-        if os.path.isfile(ind):
-            with open(str(ind), 'r') as sysCat:
-                tableData = json.load(sysCat)
-                num = 0
-                for i in tableData:
-                    
-                    if tableData[i][0] == value:
-                        ls.append(tableData[i][1])
-        
-        return ls
         
 
 if __name__ == '__main__':

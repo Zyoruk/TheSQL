@@ -355,3 +355,30 @@ class DataCatalog(object):
         errorModule = Logs()
         errorModule.Error(log)
         
+    def getPKbyVal(self, value):
+        ls = []
+        EVM = GetEVM()
+        evm = EVM.getEVM()
+        ind = EVM_LIST + '/' + str(evm) + '/index/'
+        if isfile(ind):
+            with open(str(ind), 'r') as sysCat:
+                tableData = json.load(sysCat)
+                for i in tableData:
+                    
+                    if tableData[i][0] == value:
+                        ls.append(tableData[i][1])
+        
+        return ls
+
+    def getIndeXes (self, ls, pk):
+        
+        result = []
+        num = 1
+        for elem00 in ls:
+            
+            if elem00 == pk:
+                result.append(num)
+                
+            num += 1
+        
+        return result
