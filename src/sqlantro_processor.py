@@ -61,7 +61,7 @@ class interprete:
 		elif e==6:# CLP - DISPLAY DATABASE
 			answer=self.cpl.display_database(parametros);
 		elif e==7:#CLP - DROP TABLE
-			answer=self.cpl.drop_table(parametros);
+			answer=self.ddl.drop_table(parametros);
 		elif e==8:# CLP - LIST DATABASES
 			answer=self.cpl.list_databases();
 		elif e==9:# CLP - GET STATUS
@@ -77,7 +77,7 @@ class interprete:
 			#select();
 			answer= "Select";
 		elif e==14:#DDL - CREATE TABLE
-			answer ="Create table";
+			answer=self.ddl.create_table(parametros);
 		elif e==15:#DDL - CREATE INDEX
 			answer=self.ddl.create_index(parametros);
 		elif e==16:

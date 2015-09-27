@@ -35,11 +35,10 @@ class cpl_manager:
 		self.logs=[];
 
 	def create_database(self,dbname):
-		print dbname;
-		return self.theclp.createDatabase(dbname);
+		return self.theclp.createDatabase(dbname[0]);
 
 	def drop_database(self,dbname):
-		return self.theclp.dropDatabase(dbname);
+		return self.theclp.dropDatabase(dbname[0]);
 		
 	def list_databases(self):
 		return self.theclp.listDatabases();

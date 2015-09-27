@@ -32,20 +32,32 @@ class ddl_manager:
 		self.syscat = DC.DataCatalog()
 		self.theddl = DDL(self.syscat, self.sdman)
 		
-	def set_database(schemaname):
-		print "aqui es donde asignamos la base de datos "+ schemaname;
+	def set_database(self,schemaname):
+		return self.theddl.setDataBase(schemaname[0]);
 
-	def drop_table(tablename):
-		print "aqui es donde eliminamos la tabla "+tablename;
+	def drop_table(self,tablename):
+		return self.theddl.dropTable(tablename[0]);
 		
-	def create_table():
-		print "se crea una tabla";
-
-	def alter_table():
+	def create_table(self,parametros):
+		print "se crea la tabla: ";
+		print parametros[0];
+		contador=0;
+		while contador<len(parametros[1][0]):
+			print "columna "
+			print contador;
+			print "nombre :"+parametros[1][0][contador]
+			print "tipo :"+parametros[1][1][contador]
+			print "nombre :"+parametros[1][2][contador]
+			contador=contador+1
+		if len(parametros[1][3])>0:
+			print "el pk es: "+parametros[1][3][0];
+			
+	def alter_table(self,parametros):
 		print "se altera una tabla";
 		
 	def create_index(self,parametros):
-		print "Se crea un indice";
-		print "nombre del indice: " + parametros[0];
-		print "nombre de la tabla: " + parametros[1];
-		print "columna: " + parametros[2];
+		#print "Se crea un indice";
+		#print "nombre del indice: " + parametros[0];
+		#print "nombre de la tabla: " + parametros[1];
+		#print "columna: " + parametros[2];
+		return self.theddl.createIndex(parametros[0],parametros[1],parametros[2]);

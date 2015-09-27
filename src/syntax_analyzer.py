@@ -81,23 +81,27 @@ def syntax_analyzer( parameters ):
 				else:
 					answer=-3
 			elif words[1].lower()=="table":
-				if len(words)>4:
+				
+				if len(words)>3:
 					if reserved_word(words[2])==False:
+						
+						parametros.append(words[2]);
 						if words[3].lower()=="as":
 							aux="";
 							counter=4;
 							while counter<len(words):
-								aux=aux+words[counter];
+								aux=aux+words[counter]+"&";
 								counter=counter+1;
-							aux.replace(" ","");
 							aux1=aux.lower();
-							if create_table_analyzer(aux1):
-								answer=15;
+							r,s=create_table_analyzer(aux1)
+							if r:
+								parametros.append(s);
+								answer=14;
 							else:
-								error=-18;
+								error=-8;
 
 						else:
-							answer=-18;
+							answer=-8;
 					else:
 						answer=-10;
 				else:
@@ -236,8 +240,8 @@ def syntax_analyzer( parameters ):
 				if reserved_word(words[1]):
 					answer=-10;
 				else:
+					parametros.append(words[1])
 					if len(words)>3:
-						
 						if words[2]=="set":
 							aux=[];
 							counter=3;
@@ -365,26 +369,70 @@ def values_analyzer(parameters):
 	return answer,lista_valores;
 
 def create_table_analyzer(parameters):
-	r_parentesis_pos=word_finder(parameters,");");
+	pc_parentesis_pos=word_finder(parameters,";");
+	r_parentesis_pos=word_finder(parameters,")");
 	l_parentesis_pos=word_finder(parameters,"(");
 	contador=l_parentesis_pos+1;
 	answer=False;
 	aux="";
+	p=[]
 	
-
-	if r_parentesis_pos!=-1 and l_parentesis_pos!=-1: 
-		while contador<l_parentesis_pos:
-			aux=aux+parameters[contador];
-			contador=contador+1;
+	
+	
+	
+	if parameters[0]== "(" and parameters[-3]==")" and parameters[-2]==";" and parameters[-1]=="&":
+		contador=0;
+		parameters=parameters[1:-3]
+		p_aux=parameters.replace(",","&,&");
+		p=p_aux.split("&");
+		lista_nombres=[];
+		lista_nullability=[]
+		lista_pk=[]
+		lista_type=[]
+		lista_error=[]
 		
-		aux.replace(" ","");
-		aux_list=aux.split(",");
-
-	return True#answer;
+		while contador<len(p):
+			if p[contador]==",":
+				contador=contador
+			elif valid_type(p[contador]):
+				lista_type.append(p[contador])
+			elif contador+1<len(p) and p[contador]=="not":
+				if(p[contador+1]=="null" and p[contador]=="not"):
+					lista_nullability.append("not null")
+					contador=contador+1
+			elif(p[contador]=="null"):
+				lista_nullability.append("null")
+			elif p[contador]=="primary" and contador+1<len(p):
+				if p[contador+1]=="key":
+					if contador+2<len(p):
+						if p[contador+2][0]=="(":
+							if p[contador+2][-1]==")":
+								lista_pk.append(p[contador+2][1:-1])
+					
+					contador=contador+2;
+			elif reserved_word(p[contador])==False:
+				lista_nombres.append(p[contador])
+			else:
+				lista_error.append(p[contador])
+			
+			contador=contador+1;
+	
+	if len(lista_error)==0:
+		if len(lista_nombres) == len(lista_type) and len(lista_nombres) == len(lista_nullability):
+			if len(lista_pk)==0 or len(lista_pk)==1:
+				answer=True;
+	
+	l=[]
+	l.append(lista_nombres);
+	l.append(lista_type)
+	l.append(lista_nullability)
+	l.append(lista_pk)
+	
+	return answer,l;
        
 
 def valid_type(parameters):
-	answer==False;
+	answer=False;
 	if parameters.lower()=="integer":
 		answer=True;
 	elif parameters.lower()=="varchar":
@@ -416,7 +464,7 @@ def valid_type(parameters):
 				if is_num(aux_detalle[0]) and is_num(aux_detalle[1]):
 					answer=True;
 							
-	return True;                        
+	return answer;                        
 
 
 def is_num(parameters):
@@ -437,7 +485,7 @@ def is_num(parameters):
         
 def valid_nullability_constraint(parameters):
 	answer=False;
-	if parameters.lower()=="null" or parameters.lower()=="notnull":
+	if parameters.lower()=="null" or parameters.lower()=="not":
 			answer=True;
 	return answer;
 

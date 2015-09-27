@@ -36,8 +36,20 @@ class dml_manager:
 		
 	def update(self,parametros):
 		print "aqui es donde hacemos el update"
+		print "table: "
+		print parametros[0]
+		print "Columnas: "
+		contador=0;
+		while contador<len(parametros[1]):
+			print parametros[1][contador]
+			contador=contador+1;
+			
+		print "Where : "
+		contador=0;
+		while contador<len(parametros[2]):
+			print parametros[2][contador]
+			contador=contador+1;
 		
-		print parametros;
 		
 	def insert(self,parametros):
 		print "aqui es donde hacemos el insert"
