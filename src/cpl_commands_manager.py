@@ -19,18 +19,26 @@ This file is part of SQLantro.
 # email: jsnchzjmnz@gmail.com
 # website: jsnchzjmnz.wordpress.com
 
-from CLP import *
+
+from Logs import Logs
+from CLP import CLP
+import SDManager as SDM
+import DataCatalog as DC
+from XQTerPlan import XQTerPlan
 
 class cpl_manager:
 	def __init__(self):
+		self.sdman = SDM.StoredDataManager()
+		self.syscat = DC.DataCatalog()
+		self.theclp = CLP(self.syscat, self.sdman)
+
 		self.logs=[];
-		self.theclp=CLP();
 
 	def create_database(self,dbname):
-		return self.theclp.createDatabase(dbname);
+		return self.theclp.createDatabase(dbname[0]);
 
 	def drop_database(self,dbname):
-		return self.theclp.dropDatabase(dbname);
+		return self.theclp.dropDatabase(dbname[0]);
 		
 	def list_databases(self):
 		return self.theclp.listDatabases();
