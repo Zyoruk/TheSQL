@@ -56,7 +56,7 @@ class cli:
 			if self.entrada=="exit":
 				self.flag=0;
 			elif self.entrada=="help":
-				print "toma tu ayuda";
+				print textwrap.fill(ayuda);
 			elif self.entrada=="license":
 				print textwrap.fill(license);
 			elif len(self.entrada) != 0:

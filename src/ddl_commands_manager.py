@@ -26,10 +26,10 @@ import DataCatalog as DC
 
 class ddl_manager:	
 	
-	def __init__(self):
+	def __init__(self,syscat,sdman):
 		self.logs=[];
-		self.sdman = SDM.StoredDataManager()
-		self.syscat = DC.DataCatalog()
+		self.sdman = sdman
+		self.syscat = syscat
 		self.theddl = DDL(self.syscat, self.sdman)
 		
 	def set_database(self,schemaname):
@@ -39,18 +39,30 @@ class ddl_manager:
 		return self.theddl.dropTable(tablename[0]);
 		
 	def create_table(self,parametros):
-		print "se crea la tabla: ";
+		parametros
 		print parametros[0];
 		contador=0;
+		
+		table_name=parametros[0];
+		columns_names=[]
+		column_type=[]
+		column_nullability=[]
+		PK=parametros[1][3];
+		
 		while contador<len(parametros[1][0]):
-			print "columna "
-			print contador;
-			print "nombre :"+parametros[1][0][contador]
-			print "tipo :"+parametros[1][1][contador]
-			print "nombre :"+parametros[1][2][contador]
+			columns_names.append(parametros[1][0][contador])
+			column_type.append(parametros[1][1][contador])
+			column_nullability.append(parametros[1][2][contador])
 			contador=contador+1
-		if len(parametros[1][3])>0:
-			print "el pk es: "+parametros[1][3][0];
+		
+		#print table_name
+		#print columns_names
+		#print column_type
+		#print column_nullability
+		#print PK
+		
+		
+		return self.theddl.createTable(table_name, columns_names, column_type, column_nullability, PK[0]);
 			
 	def alter_table(self,parametros):
 		print "se altera una tabla";

@@ -24,14 +24,21 @@ from cpl_commands_manager import *
 from ddl_commands_manager import *
 from dml_commands_manager import *
 
+from DML import DML
+from Logs import Logs
+import SDManager as SDM
+import DataCatalog as DC
+
 
 class interprete:
 	
 	def __init__(self):
-		self.logs=[];
-		self.cpl=cpl_manager();
-		self.ddl=ddl_manager();
-		self.dml=dml_manager();
+		self.syscat = DC.DataCatalog()
+		self.sdman = SDM.StoredDataManager()
+		self.cpl=cpl_manager(self.sdman,self.syscat);
+		self.ddl=ddl_manager(self.sdman,self.syscat);
+		self.dml=dml_manager(self.sdman,self.syscat);
+		
 		
 	def execute(self,parameters):
 		
@@ -49,7 +56,7 @@ class interprete:
 		answer="";
 		if e==1:# CLP - CREATE DATABASE
 			answer=self.cpl.create_database(parametros);
-			self.logs.append(answer);
+			#self.logs.append(answer);
 		elif e==2:# CLP - START
 			answer=self.cpl.start();
 		elif e==3:#CLP - STOP
@@ -90,7 +97,7 @@ class interprete:
 		comentario="";
 		if e==-1:
 			comentario = "Command not fount";
-			self.logs.append(comentario);
+			#self.logs.append(comentario);
 		elif e==-2:
 			comentario = "There are an invalid amount of arguments";
 		elif e==-3:

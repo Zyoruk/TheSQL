@@ -27,11 +27,10 @@ import DataCatalog as DC
 from XQTerPlan import XQTerPlan
 
 class cpl_manager:
-	def __init__(self):
-		self.sdman = SDM.StoredDataManager()
-		self.syscat = DC.DataCatalog()
+	def __init__(self,sdman,syscat):
+		self.sdman = sdman
+		self.syscat = syscat
 		self.theclp = CLP(self.syscat, self.sdman)
-
 		self.logs=[];
 
 	def create_database(self,dbname):

@@ -25,46 +25,72 @@ import DataCatalog as DC
 
 class dml_manager:	
 	
-	def __init__(self):
+	def __init__(self,sdman,syscat):
 		self.logs=[];
-		self.sdman = SDM.StoredDataManager()
-		self.syscat = DC.DataCatalog()
-		self.thedml = DML(self.syscat, self.sdman)
+		self.sdman = sdman
+		self.syscat = syscat
+		self.thedml = DML( self.sdman,self.syscat)
 	
 	def select():
 		print "aqui es donde hacemos el select"
 		
 	def update(self,parametros):
+		print parametros;
 		print "aqui es donde hacemos el update"
 		print "table: "
-		print parametros[0]
+		table= parametros[0];
+		columns=[];
+		values=[];
+		where=[];
+		print table;
 		print "Columnas: "
 		contador=0;
 		while contador<len(parametros[1]):
-			print parametros[1][contador]
+			columns.append(parametros[1][contador][0])
+			values.append(parametros[1][contador][2])
 			contador=contador+1;
 			
 		print "Where : "
 		contador=0;
 		while contador<len(parametros[2]):
-			print parametros[2][contador]
+			if parametros[2][contador]=="and" or parametros[2][contador]=="or":
+				where.append(parametros[2][contador]);
+			elif len(parametros[2][contador])==3:
+				where.append(parametros[2][contador][0]);
+				where.append(parametros[2][contador][1]);
+				where.append(parametros[2][contador][2]);
+							
 			contador=contador+1;
+		
+		print columns
+		print values
+		print where
+		
+		return self.thedml.setDataBase(table, columns, values, where);
 		
 		
 	def insert(self,parametros):
 		print "aqui es donde hacemos el insert"
 		print "tabla: " + parametros[0];
 		print "columnas: ";
+		table=parametros[0];
+		columns=[];
+		values=[];
 		contador=0;
 		while contador<len(parametros[1]):
-			print parametros[1][contador];
+			columns.append(parametros[1][contador]);
 			contador=contador+1;
 		print "valores: ";
 		contador=0;
 		while contador<len(parametros[2]):
-			print parametros[2][contador];
+			values.append(parametros[2][contador]);
 			contador=contador+1;
-			
+		
+		
+		#print table;
+		#print columns;
+		#print values;
+		return self.thedml.insertInto(table, columns, values);
 		
 		
 	def delete(self,parametros):

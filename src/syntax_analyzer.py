@@ -28,18 +28,6 @@ Devuelve resultados con valores numericos que se asignan a cada error:
 	nombre invalido para la BD
 	parameters: parametro de entrada. Comando SQL a ejecutar
 	
-	Lista de comandos:
-	
-		stop
-		start
-		create database
-		drop database
-		drop table
-		display database
-		set database
-		delete from
-		list databases
-		get status
 		
 '''
 def syntax_analyzer( parameters ):
@@ -411,7 +399,8 @@ def create_table_analyzer(parameters):
 					
 					contador=contador+2;
 			elif reserved_word(p[contador])==False:
-				lista_nombres.append(p[contador])
+				if p[contador] != "":
+					lista_nombres.append(p[contador])
 			else:
 				lista_error.append(p[contador])
 			
@@ -428,6 +417,9 @@ def create_table_analyzer(parameters):
 	l.append(lista_nullability)
 	l.append(lista_pk)
 	
+	
+	print l
+	print answer
 	return answer,l;
        
 
@@ -521,6 +513,7 @@ def select_analyzer(parameters):
 	banderisha=True;
 	aux_list=[];
 	aux_string="";
+	statement=[];
 	select_pos=word_finder(parameters,"select");
 	from_pos=word_finder(parameters,"from");
 	where_pos=word_finder(parameters,"where");
@@ -541,8 +534,20 @@ def select_analyzer(parameters):
 		if menor_lista[counter]<menor and menor_lista[counter]!=-1:
 			menor=menor_lista[counter]
 		counter=counter+1;
-	if 	group_pos==-1 and group_pos==-1 and group_pos==-1 and group_pos==-1 and group_pos==-1:
+	if 	xml_pos==-1 and json_pos==-1 and for_pos==-1 and by_pos==-1 and group_pos==-1 and where_pos==-1:
 		menor=len(parameters)
+	
+	lista_select_statement=[];
+	lista_from_statement=[];
+	lista_where_statement=[];
+	lista_group_by_statement=[];
+	lista_for_statement=[];
+	lista_json_pos_statement=[];
+	lista_xml_statement=[];
+	
+	contador=0
+	
+	
 	print select_pos;
 	print from_pos;
 	print where_pos;
@@ -556,6 +561,7 @@ def select_analyzer(parameters):
 		answer=-15;
 	else:
 		if parameters[1]=='*' and from_pos==2:
+			lista_select_statement.append("*");
 			flag=True;
 		else:
 			counter=1;
@@ -566,6 +572,7 @@ def select_analyzer(parameters):
 				counter=counter+1;
 			
 			aux_list=aux_string.split(',');
+			lista_select_statement.append(aux_list);
 			counter=0;
 			while counter<len(aux_list) and banderisha:
 				#print aux_list[counter];
@@ -588,11 +595,25 @@ def select_analyzer(parameters):
 				print banderisha;
 				if banderisha==False:
 					answer=-18;
+				else:
+					lista_where_statement=s;
+				
 			
 		if flag:
 			answer=13;
-					
-
+	
+	
+	statement.append(lista_select_statement);
+	statement.append(lista_from_statement);
+	statement.append(lista_where_statement);
+	statement.append(lista_group_by_statement);
+	statement.append(lista_for_statement);
+	statement.append(lista_json_pos_statement);
+	statement.append(lista_xml_statement);
+	
+	
+	print statement;
+	print answer;
 	return answer;
 
 	
@@ -798,7 +819,6 @@ def set_analyzer(expression):
 	
 	return result;
 '''
-
 
 #Analiza la validez de las where statements	
 def where_statement_analyzer(expression):
