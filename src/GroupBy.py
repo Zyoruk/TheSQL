@@ -91,7 +91,70 @@ class GroupBy(object):
                         ls.append(tableData[i][1])
         
         return ls
+    
+    '''Return all columns who has an index''' 
+    def getAllIndexesCol(self, table):
+        ls = []
+        if self.evm != 0:
+            
+            ls = self.getAllIndexes(table, [])
+                
+        if ls != []:
+                       
+            onlyfiles = [ f for f in listdir(str(self.indexPath)) if isfile(join(str(self.indexPath),f)) ]
+            tmp = []
+            
+            for jason in onlyfiles:         
+                tmp.append(jason.split(".",1)[0])
+                
+            onlyfiles = []
+            for jason in tmp:
+                if jason.split("_",1)[1] in ls:
+                    onlyfiles.append(jason.split("_",1)[0])
+            
+            ls = onlyfiles
         
+        return ls
+        
+    '''Destroys all indexes of a table'''    
+    def dropAllIndexes(self, tabla):
+        ls = []
+        if self.evm != 0:
+            ls = self.getAllIndexes(tabla, [])
+            
+        if ls != []:
+                       
+            onlyfiles = [ f for f in listdir(str(self.indexPath)) if isfile(join(str(self.indexPath),f)) ]
+            tmp = []
+            
+            for jason in onlyfiles:         
+                tmp.append(jason.split(".",1)[0])
+                
+            for jason in tmp:
+                if jason.split("_",1)[1] in ls:
+                    os.remove(self.indexPath + '/' + str(jason) + '.json')
+            
+            
+            
+        
+    def getAllIndexes(self, table, ls):
+        boo = False            
+            
+        for meta in self.meta:
+            if meta["name"] == table:
+                boo = True
+                if meta["index"]:
+                    for columnsParam in meta["index"]:
+                        ls.append(columnsParam["name"])
+                else:
+                    log = 'Error 11: No index on table.'
+                    self.sendError(log)
+        if  boo != True:
+            log = 'Error 1: No table in DB'
+            self.sendError(log)
+            
+        return ls
+            
 
 if __name__ == '__main__':
     gb = GroupBy()
