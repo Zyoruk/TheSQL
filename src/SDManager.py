@@ -22,7 +22,7 @@ from DataCatalog import DataCatalog
 from struct import  pack, unpack
 from json import JSONDecoder, JSONEncoder, load
 from os.path import abspath,dirname
-MININT = -2147483648
+NULLINT = -2147483647
 
 EVM_LIST = abspath(dirname('../evm/'))
 class StoredDataManager(object):
@@ -33,7 +33,7 @@ class StoredDataManager(object):
         '''
         Constructor
         '''
-        self.sysCat = None
+        self.sysCat = DataCatalog()
         self.dbname = None
         self.env = None
 
@@ -84,7 +84,7 @@ class StoredDataManager(object):
                     ty = self.sysCat.getType(table, columns[i])
                     if self.validType(ty,values[i]):
                         if ty == 'INTEGER' or 'DECIMAL' in ty and values[i] == 'NULL':
-                            values[i] = MININT
+                            values[i] = NULLINT
                         continue
                     else:
                         return -1
@@ -160,7 +160,7 @@ class StoredDataManager(object):
                         
                     dataKey = list(unpack( dataFormat, sd.get(key)))
                     
-                    if values == 'NULL' and types[index] == 'INTEGER': values = MININT
+                    if values == 'NULL' and types[index] == 'INTEGER': values = NULLINT
                     
                     dataKey[index] = values
                     dataKey = self.packData(types, dataKey)
@@ -222,54 +222,36 @@ class StoredDataManager(object):
                     
                 
             Types = []
-            
-            for column in columns:
-                if self.sysCat.getIndex(table, column) == -1: return 'Check columns existance'
+            for i in range(0, len(columns)):
                 
-                #Add missing values if null is accepted  
-                for value in values:
+                if self.sysCat.getIndex(table, columns[i]) == -1: return 'Check columns existance'
+                
+                coltype = self.sysCat.getType(table, columns[i])
+                Types.append(coltype)
+                
+                if values[i] == 'NULL' and self.sysCat.getNull(table, columns[i]):
                     
-                    if value == 'NULL':
+                    if coltype == 'INTEGER' or 'DECIMAL'in coltype:
+                        values[i] = NULLINT
                         
-                        if self.sysCat.getNull(table, column):
-                            
-                            # Check data type.
-                            valtype = self.sysCat.getType(table, column)
-                            if valtype == 'INTEGER' or 'DECIMAL' in valtype:
-                                value = MININT
-                            
-                            if self.validType(valtype,value):
-                                Types.append(valtype)
-                                break
-                            else:
-                                return -1
-                            
-                        else:
-                            return -1
-                    else:
-                        #Check data type
-                        valtype = self.sysCat.getType(table, column)
-                        if self.validType(valtype,value):
-                            Types.append(valtype)
-                            break
-                        else:
-                            return -1
-
+                elif values[i] == 'NULL' and not (self.sysCat.getNull(table, columns[i])):
+                    return -1             
+                    
             cols = columns
             vals = values
             
             #Check for missing columns
             for col in self.sysCat.getColNames(table)[:-1]:
-                if col in columns:
-                    pass
+                if col in cols:
+                    continue
                 else: 
-                    print self.sysCat.getNull(table,col)
-                    if self.sysCat.getNull(table, col):
+                    if self.sysCat.getNull(table, col) == 'NULL':
+                        print col
                         cols.append(col)
                         ty = self.sysCat.getType(table, col)
                         Types.append(ty)
                         if ty == 'INTEGER' or 'DECIMAL' in ty:
-                            vals.append(MININT)
+                            vals.append(NULLINT)
                         else:
                             vals.append('NULL')
                     else:
@@ -295,10 +277,9 @@ class StoredDataManager(object):
             #metadata stores data reversed
             Types.reverse()
             values.reverse()
-            
             #Convert to bytes
             convertedDataList = self.packData(Types, values)
-            sd = SD.StoredData(5,'' + self.env+ table +'.json') 
+            sd = SD.StoredData(5,'' + self.env+ table +'.json')
             sd.insert(key, convertedDataList)
             sd.dump()
         else:
@@ -326,7 +307,7 @@ class StoredDataManager(object):
         for i in range(0, len(types)):
             
             if values[i] == 'NULL' and types[i] == 'INTEGER':
-                result+= (pack('i', MININT))
+                result+= (pack('i', NULLINT))
                 continue
             if 'DECIMAL' in types[i]:
                 a = str(values[i]).split('.')
@@ -347,13 +328,31 @@ class StoredDataManager(object):
         if self.exists(table):
             res = []
             unpackFormat = ''
-            for ty in self.sysCat.getTypes(table):
-                unpackFormat += self.getPackFormat(ty)
+            types = self.sysCat.getTypes(table)[:-1]
+            types.reverse()
             
+            for ty in types:
+                unpackFormat += self.getPackFormat(ty)
             i = self.sysCat.getIndex(table, column)
-            sd = SD.StoredData(5, table)
+            sd = SD.StoredData(5, '' + self.env + table +'.json')
+            
             for item in sd.getAll():
-                res.append(unpack(unpackFormat, item[1])[i])
+                tounpack = str(item[1]).encode(encoding = "ISO-8859-1")
+                tounpack = list(unpack(unpackFormat, tounpack))
+                tounpack.reverse()
+                toadd = tounpack[i-1]
+                
+                if toadd == NULLINT:
+                    res.append('NULL')
+                else:
+                    res.append(toadd)
+            
+            if res != [] and isinstance(res[0], str) and  '\x00' in res[0]:
+                t = []
+                index = res[0].index('\x00')
+                for item in res:
+                    t.append(item[0:index])
+                res = t
             return res
         return -1
         
@@ -367,12 +366,14 @@ class StoredDataManager(object):
             for item in SD.StoredData(5,'' + self.env + table +'.json').getAll():
                 t = []                
                 t.append(item)
-                t.append(unpack(unpackFormat, item[1]))
+                tounpack = str(item[1]).encode(encoding = "ISO-8859-1")
+                t.append(unpack(unpackFormat,tounpack))
                 result.append(t)                
             return result
         return -1
     
     def getAllKeys(self, table):
+        print self.sysCat.getTabNames()
         if self.exists(table):
             res = []
             l =  SD.StoredData(5,'' + self.env + table +'.json').getAll()
@@ -422,12 +423,16 @@ class StoredDataManager(object):
         result  = []
         for item in l:
             t = []
-            data = unpack(fmt, item[1])
+            tounpack = str(item[1]).encode(encoding = "ISO-8859-1")
+            data = unpack(fmt,tounpack)
             for i in data:
                 if '\x00' in str(i):
                     t.append(str(i)[0:str(i).index('\x00')])
                 else:
-                    t.append(i)
+                    if i == NULLINT:
+                        t.append('NULL')
+                    else:
+                        t.append(i)
                     
             
             
@@ -444,7 +449,7 @@ import DDL
 import unittest
 import CLP
 class TesterClass(unittest.TestCase):
-    def test1(self):
+    def notest1(self):
         self.sdman = StoredDataManager()
         self.syscat = DataCatalog()
         self.sdman.loadData(self.syscat)
@@ -476,7 +481,7 @@ class TesterClass(unittest.TestCase):
         self.sdman.update('test1', 0, 'Age', 100)
         print self.sdman.getAllasArray('test1')
         
-    def test4(self):
+    def notest4(self):
 
         self.sdman = StoredDataManager()
         self.syscat = DataCatalog()
@@ -486,11 +491,34 @@ class TesterClass(unittest.TestCase):
         self.clp.createDatabase('naDB')
         self.ddl.setDataBase('naDB')
         self.clp.start()
-        self.ddl.createTable('test3', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NOT NULL'],'ID')
+        self.ddl.createTable('test3', ['ID', 'Nom', 'Age'], ['INTEGER', 'VARCHAR', 'INTEGER'], ['NOT NULL','NOT NULL','NULL'],'ID')
         self.sdman.insert('test3', 1, ['Nom','Age'], ['B', 2])
         self.sdman.insert('test3', 2, ['Nom','Age'], ['C', 3])
         self.sdman.insert('test3', 3, ['Nom','Age'], ['D', 4])
+        self.sdman.insert('test3', 4, ['Nom', 'Age'], ['D', 'NULL'])
+        self.sdman.insert('test3', 5, ['Nom'], ['E'])
+        self.sdman.insert('test3', 6, ['Age'], [22])
+        
         print self.sdman.getAllasArray('test3')
+        
+    def notest5(self):     
+        data = pack('100si','Rey', 2147483647)
+        print [data]
+        data = unpack ('100si', data)
+        print data
+        pack('3sii','Rey', 5,10)
+        
+    def test6(self):
+        self.sdman = StoredDataManager()
+        self.syscat = DataCatalog()
+        self.sdman.loadData(self.syscat)
+        self.ddl = DDL.DDL(self.syscat, self.sdman)
+        self.clp = CLP.CLP(self.syscat, self.sdman)
+        self.ddl.setDataBase('naDB')
+        self.clp.start()
+        print self.sdman.getAllKeys('test3')
+        print self.sdman.getAllValues('test3', 'Nom')
+        print self.sdman.getAllValues('test3', 'Age')
         
 if __name__ == '__main__':
     unittest.main()

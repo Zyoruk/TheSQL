@@ -29,12 +29,13 @@ class CLP():
                 if os.path.exists(evm + '/metadata'):
                     #load data
                     self.data.loadMetadatas()
-                    #self.dato.loadData()
+                    self.dato.loadData(self.data)
                     log = 'Data loaded.'
                     
                 else:    
                     os.makedirs(evm + '/metadata')
                     os.makedirs(evm + '/info')
+                    os.makedirs(evm + '/index')
                     evm0 = evm + '/ERRORS.txt'
                     f = open(evm0,'w+')
                     f.write(evm0)

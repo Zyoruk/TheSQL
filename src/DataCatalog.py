@@ -91,8 +91,7 @@ class DataCatalog(object):
         if self.evm == 0:
             return 0
         self.db = self.getTableMetadata(table)
-        cat = self.db['FK']
-#        self.sysCat.close()       
+        cat = self.db['FK']     
         return cat
     
     def getFKChilds(self, table):
@@ -306,8 +305,27 @@ class DataCatalog(object):
             
             if self.getType(table_name, column) == self.getType(refTable, refColumn):
                 if refColumn in self.getColNames(refTable):
-                    q = {'column':column,'reftable':refTable,'refcolumn':refColumn}
-                    if q not in self.getFK(table_name):                
+                    
+                    q = {'column':column,'reftable':refTable,'refcolumn':refColumn}                    
+                    u = self.getFK(table_name)
+                    if u:
+                        if q not in u:                
+                            for tb in self.meta:
+                                if tb["name"] == table_name:
+                                    boo = True
+                                    if tb["FK"] == False:
+                                        tb["FK"] = [q]
+                                    else:
+                                        tb["FK"].append(q)
+                                    
+                                    log = 'FK successfully updated'
+                                    return log
+                            
+                            if boo == False:
+                                log = 0
+                        else:
+                            log =  "Error 11: FK already exist."
+                    else:
                         for tb in self.meta:
                             if tb["name"] == table_name:
                                 boo = True
@@ -321,8 +339,6 @@ class DataCatalog(object):
                         
                         if boo == False:
                             log = 0
-                    else:
-                        log =  "Error 11: FK already exist."
                 else:
                     log = "Error 11: No column in table."
                     self.sendError(log)
@@ -331,8 +347,9 @@ class DataCatalog(object):
                 self.sendError(log)
         else:
             self.sendError(log)
+            return 0
         
-        return 0
+        return log
     
     def sendError(self, log):
         errorModule = Logs()

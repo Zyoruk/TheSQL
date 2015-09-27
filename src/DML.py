@@ -38,7 +38,7 @@ class DML(object):
         self.sdm = sdman
         self.syscat = syscat
         
-    def insertInto(self, table, columns, values):
+    def insertInto(self, table, columns, values, index = False):
         if table in self.syscat.getTabNames():
             if columns == []:
                 return -1 
@@ -55,10 +55,13 @@ class DML(object):
                 
                 for key in self.sdm.getAllKeys(table):
                     self.sdm.update(table, key, columns, values) 
+                
+                if index == True:
+                    self.syscat.reDoIndex(table)
                 return 0
         return -1
     
-    def deleteFrom(self, table, where = {}):
+    def deleteFrom(self, table, where = {}, index = False):
         if table in self.syscat.getTabNames():   
             if where == {}:
                 self.sdm.erase(table)
@@ -68,10 +71,13 @@ class DML(object):
                 if toDelete != []:
                     for item in toDelete:
                         self.sdm.remove(table, item[0])
-                return 0
+                        
+            if index == True:
+                self.syscat.reDoIndex(table)
+            return 0
         return -1
     
-    def update(self, table, columns, values, where = []):
+    def update(self, table, columns, values, where = [], index = False):
         #hay que Verificar que no se esta tratando de hacer update a un PK
         if (self.syscat.getsPK(table) in columns) or (not(table in self.syscat.getTabNames())):
             return -1
@@ -95,7 +101,10 @@ class DML(object):
             
         for row in rows:
             self.sdm.update(table, row[0], columns, values)
-                
+            
+        if index == True:
+            self.syscat.reDoIndex(table)                
+                        
         return 0
         
     def join(self,tables):
@@ -419,7 +428,7 @@ class DML(object):
                 return False 
      
     #TODO
-    def Select(self, columns = [], tables = [], where = [], groupBy = [], form = '0'):
+    def Select(self, columns = [], tables = [], where = [], groupBy = [], form = '0', index = False):
         if tables == []: return 'At least one table must be used'
         
         #Perform Join       
@@ -477,7 +486,7 @@ class DML(object):
         
         
         
-        
+from struct import pack, unpack
 import unittest
 class Test(unittest.TestCase):
     
@@ -553,7 +562,7 @@ class Test(unittest.TestCase):
         self.dml = DML(self.sdman, self.syscat)
         listset = self.dml.join('test1')
         print self.dml.FormatXML(listset)
-        
+
 if __name__ == '__main__':
     unittest.main()
     

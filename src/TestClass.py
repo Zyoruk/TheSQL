@@ -109,8 +109,9 @@ class DDLTestClass(object):
         self.dato.setDataBase(0)
         
     def test3(self):
-        #self.dato.createIndex('ByColumn', 'moo', 'maria')
         print self.dato.alterTable('mugre', 'demonios', 'moo', 'demonios')
+        self.dato.createIndex('ByColumn', 'moo', 'maria')
+        
         
 
 class LogsTestClass(object):
@@ -143,7 +144,7 @@ if __name__ == '__main__':
     #clp.test4()
     #clp.test5()
     #clp.test3()
-    #clp.test6()
+    clp.test6()
     ''' SET DB AND START '''
     ddl.test0()
     clp.test7()

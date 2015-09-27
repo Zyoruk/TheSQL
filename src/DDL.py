@@ -16,6 +16,7 @@ class DDL(object):
         self.evm = 0
         self.metaPath = 0
         self.infoPath = 0
+        self.indexPath  = 0
         self.log = 'Error 11: EVM not set up.'
         
     def setDataBase(self, db):
@@ -25,6 +26,7 @@ class DDL(object):
             self.evm = str(db)
             self.metaPath = EVM_LIST + '/' + str(db) + '/metadata/'
             self.infoPath = EVM_LIST + '/' + str(db) + '/info/'
+            self.indexPath = EVM_LIST + '/' + str(db) + '/index/'
             with open(self.varfile , 'w') as TMP:
                 json.dump(evm,TMP)
             log = 'Environment ' + str(db) + ' set.'
@@ -80,20 +82,24 @@ class DDL(object):
         log = 'Error 11: EVM not set up.'
         if self.evm != 0:
             
-            keys = self.sdman.getAllKeys()
+            print table_name
+            print column
+            keys = self.sdman.getAllKeys(table_name)
             vals = self.sdman.getAllValues(table_name, column)
             
             if len(keys) != len(vals):
                 print("Error, len mismatch")
                 return
-            regs = []
+            
+            regs = {}
             while len(keys) != 0:
-                regs.append( [keys.pop(-1),vals.pop(-1)] )
+                regs[vals.pop(0) ] = keys.pop(0)
                 
-            regs = json.JSONEncoder().encode(regs)   
+            regs = json.JSONEncoder(encoding = "ISO-8859-1").encode(regs)            
         
-            with open(self.indexPath + '/' + indexName + '.json', 'w') as sysCat:
-                json.dump(regs,sysCat)
+            with open(self.indexPath + '/' + indexName + '.json', 'w+') as sysCat:
+                #json.dump(regs,sysCat)
+                sysCat.write(regs)
             
             self.dato.createIndex(indexName, table_name, column)
         else:
